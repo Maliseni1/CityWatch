@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CityWatch - Incident Reporter</title>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+        .form-group { margin-bottom: 1rem; }
+        input, textarea { width: 100%; padding: 0.5rem; margin-top: 0.2rem; }
+        button { background: #007BFF; color: white; border: none; padding: 0.5rem 1rem; cursor: pointer; }
+        .incident-card { border: 1px solid #ddd; padding: 1rem; margin-top: 1rem; border-radius: 5px; }
+        .status-Open { color: red; }
+        .status-Resolved { color: green; }
+    </style>
+</head>
+<body>
+    <h1>CityWatch 🏙️</h1>
+    
+    <div style="background: #f9f9f9; padding: 1.5rem; border-radius: 8px;">
+        <h3>Report an Incident</h3>
+        <form id="incidentForm">
+            <div class="form-group">
+                <input type="text" id="title" placeholder="Title (e.g. Pothole)" required>
+            </div>
+            <div class="form-group">
+                <input type="text" id="location" placeholder="Location" required>
+            </div>
+            <div class="form-group">
+                <textarea id="description" placeholder="Description" rows="3" required></textarea>
+            </div>
+            <button type="submit">Submit Report</button>
+        </form>
+    </div>
+
+    <h3>Recent Reports</h3>
+    <div id="incidentList">Loading...</div>
+
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+### 1. CREATE a new Incident
+POST http://localhost:5000/api/incidents
+Content-Type: application/json
+
+{
+  "title": "Broken Streetlight",
+  "description": "Streetlight flickering and creating hazard at night.",
+  "location": "Corner of Elm St and 4th Ave"
+}
+
+### 2. GET all Incidents
+GET http://localhost:5000/api/incidents
+
+### 3. GET a specific Incident (Replace ID below with one from step 2)
+# Copy an "_id" from the response of step 2 and paste it after the slash
+GET http://localhost:5000/api/incidents/YOUR_COPIED_ID_HERE
+
+### 4. UPDATE an Incident status
+# Replace ID below
+PUT http://localhost:5000/api/incidents/YOUR_COPIED_ID_HERE
+Content-Type: application/json
+
+{
+  "status": "In Progress"
+}
+
+### 5. DELETE an Incident
+# Replace ID below
+DELETE http://localhost:5000/api/incidents/YOUR_COPIED_ID_HERE
