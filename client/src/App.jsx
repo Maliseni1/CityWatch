@@ -261,7 +261,12 @@ function App() {
             </div>
           </div>
 
-          {isLoading && <p className="loading-text">Loading...</p>}
+          {/* Custom Image Loader */}
+          {isLoading && (
+            <div className="loader-container">
+              <img src="/logo.png" alt="Loading..." className="g-loader" />
+            </div>
+          )}
           {!isLoading && filteredIncidents.length === 0 && <p className="no-data">No reports found.</p>}
           
           {filteredIncidents.map((incident) => {
