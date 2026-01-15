@@ -82,3 +82,24 @@ npm install
 npm run dev
 
 Visit http://localhost:5173 in your browser.
+
+
+📝 Internship Tasks Completed
+
+This project satisfies 3 Tasks across all levels of the Codveda Internship Task List:
+
+    ✅ Level 1 (Basic): Built a REST API with Node.js/Express & MongoDB CRUD operations.
+
+    ✅ Level 2 (Intermediate): Created a Frontend with React and implemented JWT Authentication.
+
+    ✅ Level 3 (Advanced): Implemented WebSockets for real-time bidirectional communication.
+
+
+
+📬 Contact
+
+Developer: [MALISENI CHAVULA]
+
+Internship: Codveda Full-Stack Development
+
+LinkedIn: [https://www.linkedin.com/in/maliseni-chavula-b162953a0]
