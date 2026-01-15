@@ -1,0 +1,89 @@
+
+/* 1. Reset and Center the entire page content */
+:root, body, #root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start; /* Aligns to top, center horizontally */
+  background-color: #f0f2f5; /* Light gray background for contrast */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* 2. The main white box in the center */
+.container {
+  width: 100%;
+  max-width: 800px; /* Prevents it from getting too wide on large screens */
+  margin: 2rem; /* Adds space around the box on mobile */
+  padding: 2.5rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+  text-align: center; /* Centers the main headings like "CityWatch" */
+}
+
+h1 { color: #333; margin-bottom: 1.5rem; }
+h3 { text-align: left; color: #555; margin-top: 2rem;}
+
+/* 3. Form Styling */
+.form-box {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  text-align: left; /* Keep form inputs aligned left */
+  margin-bottom: 2rem;
+}
+
+input, textarea {
+  width: 100%;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  display: block;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box; /* Ensures padding doesn't affect width */
+  font-size: 1rem;
+}
+
+button {
+  width: 100%;
+  background: #007BFF;
+  color: white;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+button:hover { background: #0056b3; }
+
+/* 4. Incident List Styling */
+.card {
+  background: white;
+  border: 1px solid #e9ecef;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  text-align: left; /* Keep incident details aligned left */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.card h4 { margin: 0 0 1rem 0; font-size: 1.2rem; }
+.card p { margin: 0.5rem 0; color: #555; }
+
+/* Status Badges */
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+.status-Open { background: #ffebee; color: #c62828; }
+.status-Resolved { background: #e8f5e9; color: #2e7d32; }
