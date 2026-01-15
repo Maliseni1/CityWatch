@@ -7,7 +7,11 @@ router.post('/', async (req, res) => {
   try {
     const newIncident = new Incident(req.body);
     const savedIncident = await newIncident.save();
-    res.status(201).json(savedIncident); // 201 Created
+
+    // EMIT EVENT: Tell everyone a new incident happened
+    req.io.emit('new_incident', savedIncident); 
+
+    res.status(201).json(savedIncident);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
