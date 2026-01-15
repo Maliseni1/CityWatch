@@ -13,9 +13,9 @@ const PORT = process.env.PORT || 5000;
 
 // 1. Define Allowed Origins (Localhost + Production URL from Env)
 const allowedOrigins = [
-  "http://localhost:5173",             // Local Vite
-  process.env.FRONTEND_URL             // Production Vercel URL
-];
+  "http://localhost:5173",
+  process.env.FRONTEND_URL
+].filter(Boolean);
 
 // 2. HTTP Server & Socket.io
 const server = http.createServer(app);
