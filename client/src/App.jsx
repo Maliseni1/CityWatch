@@ -9,7 +9,7 @@ function App() {
 
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [incidents, setIncidents] = useState([]);
-  const [formData, setFormData] = useState({ title: '', location: '', description: '', type: 'General' });
+  const [formData, setFormData] = useState({ title: '', location: '', description: '', type: 'General', isAnonymous: false });
   
   // AUTH STATES
   // 'login' | 'register' | 'forgot' | 'reset'
@@ -250,6 +250,18 @@ function App() {
               placeholder="Description..." value={formData.description} required rows="3"
               onChange={(e) => setFormData({...formData, description: e.target.value})} 
             />
+            <div style={{ display: 'flex', alignItems: 'center', margin: '10px 0', gap: '8px' }}>
+              <input 
+                type="checkbox" 
+                id="anonCheck"
+                checked={formData.isAnonymous}
+                onChange={(e) => setFormData({...formData, isAnonymous: e.target.checked})}
+                style={{ width: 'auto', margin: 0 }} // Override default full-width style
+              />
+              <label htmlFor="anonCheck" style={{ fontSize: '0.9rem', color: '#555', cursor: 'pointer' }}>
+                Post Anonymously 🕵️
+              </label>
+            </div>
             <button type="submit">Submit Report</button>
           </form>
         </section>
@@ -276,7 +288,9 @@ function App() {
                 <p className="location">📍 {incident.location}</p>
                 <p className="description">{incident.description}</p>
                 <div className="card-footer">
-                  <span>👤 @{incident.user || 'Anonymous'}</span>
+                  <span style={{ fontStyle: isHidden ? 'italic' : 'normal' }}>
+                    👤 {displayName}
+                  </span>
                   <span>🕒 {formattedDate}</span>
                 </div>
               </div>
