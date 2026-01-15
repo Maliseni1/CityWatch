@@ -15,11 +15,10 @@ function App() {
   };
 
   // --- STATES ---
+  const [showForm, setShowForm] = useState(false); // <--- New state for form toggle
   const [token, setToken] = useState(localStorage.getItem('token'));
   
-  // We now store both ID (for upvotes) and Username (for permissions)
   const [currentUser, setCurrentUser] = useState({ id: null, username: null, role: 'user' });
-  
   const [incidents, setIncidents] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [filterType, setFilterType] = useState('All'); 
@@ -39,7 +38,6 @@ function App() {
     if (token) {
       const decoded = parseJwt(token);
       if (decoded) {
-        // Assume the token payload has { id, username, role }
         setCurrentUser({ 
           id: decoded.id, 
           username: decoded.username, 
@@ -138,6 +136,7 @@ function App() {
       setFormData({ title: '', location: '', description: '', type: 'General', isAnonymous: false });
       setImageFile(null);
       document.getElementById('fileInput').value = ""; 
+      setShowForm(false); // Close form after submit
     } catch (err) {
       toast.dismiss(loader);
       toast.error("Failed to submit report.");
@@ -214,40 +213,61 @@ function App() {
       </header>
 
       <main className="main-content">
-        <section className="form-section">
-          <h3>📢 Report an Incident</h3>
-          <form onSubmit={handleIncidentSubmit}>
-            <div className="input-group">
-              <input placeholder="Title" value={formData.title} required onChange={(e) => setFormData({...formData, title: e.target.value})} />
-              <select value={formData.type} onChange={(e) => setFormData({...formData, type: e.target.value})}>
-                <option value="General">General</option>
-                <option value="Sanitation">Sanitation 🗑️</option>
-                <option value="Infrastructure">Infrastructure 🚧</option>
-                <option value="Traffic">Traffic 🚦</option>
-                <option value="Water">Water Supply 💧</option>
-              </select>
-            </div>
-            <input placeholder="Location" value={formData.location} required onChange={(e) => setFormData({...formData, location: e.target.value})} />
-            <textarea placeholder="Description..." value={formData.description} required rows="3" onChange={(e) => setFormData({...formData, description: e.target.value})} />
-            
-            <div className="file-upload-wrapper">
-              <label style={{ fontSize: '0.9rem', marginBottom: '5px', display: 'block' }}>Attach Photo (Optional) 📸</label>
-              <input type="file" id="fileInput" accept="image/*" onChange={(e) => setImageFile(e.target.files[0])} />
-            </div>
+        
+        {/* TOGGLE BUTTON SECTION */}
+        <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'flex-end' }}>
+          <button 
+            onClick={() => setShowForm(!showForm)}
+            style={{ 
+              width: 'auto', 
+              background: showForm ? '#ef4444' : '#2563eb', // Red if open, Blue if closed
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '8px',
+              padding: '10px 20px'
+            }}
+          >
+            {showForm ? '✖ Close Form' : '➕ Report Incident'}
+          </button>
+        </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', margin: '15px 0', gap: '8px' }}>
-              <input type="checkbox" id="anonCheck" checked={formData.isAnonymous} onChange={(e) => setFormData({...formData, isAnonymous: e.target.checked})} style={{ width: 'auto', margin: 0 }} />
-              <label htmlFor="anonCheck" style={{ fontSize: '0.9rem', color: '#555', cursor: 'pointer' }}>Post Anonymously 🕵️</label>
-            </div>
+        {/* FORM SECTION (Only shows if showForm is true) */}
+        {showForm && (
+          <section className="form-section" style={{ animation: 'fadeIn 0.3s ease' }}>
+            <h3>📢 Report an Incident</h3>
+            <form onSubmit={handleIncidentSubmit}>
+              <div className="input-group">
+                <input placeholder="Title" value={formData.title} required onChange={(e) => setFormData({...formData, title: e.target.value})} />
+                <select value={formData.type} onChange={(e) => setFormData({...formData, type: e.target.value})}>
+                  <option value="General">General</option>
+                  <option value="Sanitation">Sanitation 🗑️</option>
+                  <option value="Infrastructure">Infrastructure 🚧</option>
+                  <option value="Traffic">Traffic 🚦</option>
+                  <option value="Water">Water Supply 💧</option>
+                </select>
+              </div>
+              <input placeholder="Location" value={formData.location} required onChange={(e) => setFormData({...formData, location: e.target.value})} />
+              <textarea placeholder="Description..." value={formData.description} required rows="3" onChange={(e) => setFormData({...formData, description: e.target.value})} />
+              
+              <div className="file-upload-wrapper">
+                <label style={{ fontSize: '0.9rem', marginBottom: '5px', display: 'block' }}>Attach Photo (Optional) 📸</label>
+                <input type="file" id="fileInput" accept="image/*" onChange={(e) => setImageFile(e.target.files[0])} />
+              </div>
 
-            <button type="submit">Submit Report</button>
-          </form>
-        </section>
+              <div style={{ display: 'flex', alignItems: 'center', margin: '15px 0', gap: '8px' }}>
+                <input type="checkbox" id="anonCheck" checked={formData.isAnonymous} onChange={(e) => setFormData({...formData, isAnonymous: e.target.checked})} style={{ width: 'auto', margin: 0 }} />
+                <label htmlFor="anonCheck" style={{ fontSize: '0.9rem', color: '#555', cursor: 'pointer' }}>Post Anonymously 🕵️</label>
+              </div>
 
+              <button type="submit">Submit Report</button>
+            </form>
+          </section>
+        )}
+
+        {/* FEED SECTION */}
         <section className="feed-section">
           <div className="feed-header">
             <h3>Community Reports</h3>
-            {/* HORIZONTAL FILTERS */}
             <div className="filter-bar">
               {['All', 'Sanitation', 'Infrastructure', 'Traffic', 'Water'].map(type => (
                 <button 
@@ -261,7 +281,6 @@ function App() {
             </div>
           </div>
 
-          {/* Custom Image Loader */}
           {isLoading && (
             <div className="loader-container">
               <img src="/logo.png" alt="Loading..." className="g-loader" />
@@ -278,8 +297,6 @@ function App() {
             
             const votes = incident.upvotes || [];
             const hasUpvoted = votes.includes(currentUser.id);
-            
-            // PERMISSION CHECK: Is this user the creator or an admin?
             const canEditStatus = (currentUser.username === incident.user) || (currentUser.role === 'admin');
 
             return (
@@ -296,7 +313,6 @@ function App() {
                     <span className="type-badge">{incident.type}</span>
                   </div>
                   
-                  {/* STATUS SECTION: DROPDOWN OR BADGE */}
                   {canEditStatus ? (
                     <div className="status-container">
                       <select 
@@ -329,7 +345,6 @@ function App() {
                       👤 {displayName}
                     </span>
                     
-                    {/* NEW VERIFY BUTTON */}
                     <button 
                       onClick={() => handleUpvote(incident._id)}
                       className={`upvote-btn ${hasUpvoted ? 'voted' : ''}`}
