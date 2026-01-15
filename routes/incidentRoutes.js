@@ -38,6 +38,7 @@ router.post('/', async (req, res) => {
       isAnonymous: req.body.isAnonymous || false, 
       // We ALWAYS save the real user (for admin safety), 
       // the frontend decides whether to show it or not based on isAnonymous.
+      imageUrl: req.body.imageUrl || '',
       user: user.username, 
       status: 'Open'
     });

@@ -8,6 +8,7 @@ const IncidentSchema = new mongoose.Schema({
   status: { type: String, default: 'Open' }, // Open, In Progress, Resolved
   user: { type: String }, // The username of the reporter
   isAnonymous: { type: Boolean, default: false }, // <--- NEW: Stores if they want to be hidden
+  imageUrl: { type: String },
   upvotes: { type: Number, default: 0 }
 }, { timestamps: true });
 
