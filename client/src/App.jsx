@@ -4,6 +4,9 @@ import './App.css';
 import { io } from 'socket.io-client';
 
 function App() {
+  // 1. DYNAMIC URL: Uses Vercel's env variable if available, otherwise Localhost
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [incidents, setIncidents] = useState([]);
   const [formData, setFormData] = useState({ title: '', location: '', description: '' });
@@ -16,7 +19,8 @@ function App() {
   // --- ACTION: Fetch Incidents ---
   const fetchIncidents = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/incidents');
+      // Updated to use API_URL
+      const res = await axios.get(`${API_URL}/api/incidents`);
       setIncidents(res.data);
     } catch (err) {
       console.error("Error fetching data:", err);
@@ -24,7 +28,6 @@ function App() {
   };
 
   // --- EFFECT 1: Load Initial Data when Logged In ---
-  // (This was missing in your code!)
   useEffect(() => {
     if (token) {
       fetchIncidents();
@@ -33,14 +36,12 @@ function App() {
 
   // --- EFFECT 2: Setup Real-time Sockets ---
   useEffect(() => {
-    // Connect to backend
-    const socket = io('http://localhost:5000');
+    // Updated to use API_URL
+    const socket = io(API_URL);
 
     // Listen for 'new_incident' event
     socket.on('new_incident', (newIncident) => {
-      // Update state by adding the new incident to the top of the list
       setIncidents((prevIncidents) => {
-        // Optional: Check to prevent duplicates if your network is slow
         if (prevIncidents.find(i => i._id === newIncident._id)) return prevIncidents;
         return [newIncident, ...prevIncidents];
       });
@@ -59,7 +60,8 @@ function App() {
     const endpoint = isLoginMode ? 'login' : 'register';
     
     try {
-      const res = await axios.post(`http://localhost:5000/api/auth/${endpoint}`, authData);
+      // Updated to use API_URL
+      const res = await axios.post(`${API_URL}/api/auth/${endpoint}`, authData);
       
       if (isLoginMode) {
         localStorage.setItem('token', res.data.token);
@@ -78,15 +80,11 @@ function App() {
   const handleIncidentSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Post the data
-      await axios.post('http://localhost:5000/api/incidents', formData);
+      // Updated to use API_URL
+      await axios.post(`${API_URL}/api/incidents`, formData);
       
-      // Clear the form
       setFormData({ title: '', location: '', description: '' });
-      
-      // NOTE: We do NOT need to call fetchIncidents() here anymore.
-      // The Socket.io listener above will automatically catch the 
-      // "new_incident" event and update the list for us!
+      // Socket handles the update, no need to fetch
     } catch (err) {
       console.error("Error posting data:", err);
     }
@@ -99,7 +97,7 @@ function App() {
     setIncidents([]);
   };
 
-  // --- RENDER: LOGIN/REGISTER SCREEN ---
+  // --- RENDER ---
   if (!token) {
     return (
       <div className="container" style={{ maxWidth: '400px' }}>
@@ -131,7 +129,6 @@ function App() {
     );
   }
 
-  // --- RENDER: MAIN DASHBOARD ---
   return (
     <div className="container">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
