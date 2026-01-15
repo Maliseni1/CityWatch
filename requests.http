@@ -27,3 +27,21 @@ Content-Type: application/json
 ### 5. DELETE an Incident
 # Replace ID below
 DELETE http://localhost:5000/api/incidents/YOUR_COPIED_ID_HERE
+
+### 6. Register a New User
+POST http://localhost:5000/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "citizen1",
+  "password": "securepassword123"
+}
+
+### 7. Login
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "citizen1",
+  "password": "securepassword123"
+}
