@@ -105,4 +105,40 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// TOGGLE UPVOTE: /api/incidents/:id/upvote
+router.put('/:id/upvote', async (req, res) => {
+  try {
+    // 1. Get the user ID from the token
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ message: 'Unauthorized' });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.id;
+
+    // 2. Find the incident
+    const incident = await Incident.findById(req.params.id);
+    if (!incident) return res.status(404).json({ message: 'Not found' });
+
+    // 3. Check if user already upvoted
+    const index = incident.upvotes.indexOf(userId);
+
+    if (index === -1) {
+      // Not found? Add them (Upvote)
+      incident.upvotes.push(userId);
+    } else {
+      // Found? Remove them (Un-vote)
+      incident.upvotes.splice(index, 1);
+    }
+
+    const updatedIncident = await incident.save();
+    
+    // 4. Notify everyone via Socket
+    const io = req.app.get('socketio');
+    if (io) io.emit('update_incident', updatedIncident);
+
+    res.json(updatedIncident);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

@@ -9,7 +9,7 @@ const IncidentSchema = new mongoose.Schema({
   user: { type: String }, // The username of the reporter
   isAnonymous: { type: Boolean, default: false }, // <--- NEW: Stores if they want to be hidden
   imageUrl: { type: String },
-  upvotes: { type: Number, default: 0 }
+  upvotes: [{ type: String }] // Array of user IDs
 }, { timestamps: true });
 
 module.exports = mongoose.model('Incident', IncidentSchema);

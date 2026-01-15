@@ -7,6 +7,9 @@
   --card-bg: #ffffff;
   --text-main: #1f2937;
   --text-muted: #6b7280;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
 }
 
 body {
@@ -30,6 +33,7 @@ body {
   align-items: center;
   height: 100vh;
   background: linear-gradient(135deg, #e0e7ff 0%, #f3f4f6 100%);
+  padding: 20px;
 }
 
 .auth-box {
@@ -74,7 +78,7 @@ input, select, textarea {
   border: 1px solid #d1d5db;
   border-radius: 8px;
   font-size: 1rem;
-  box-sizing: border-box; /* Fixes padding issues */
+  box-sizing: border-box; 
   transition: border 0.2s;
   font-family: inherit;
 }
@@ -91,6 +95,24 @@ input:focus, select:focus, textarea:focus {
   gap: 10px;
 }
 
+/* File Upload specific styles */
+.file-upload-wrapper {
+  margin-bottom: 15px;
+  padding: 10px;
+  background: #f9fafb;
+  border: 1px dashed #d1d5db;
+  border-radius: 8px;
+}
+
+.file-upload-wrapper input[type="file"] {
+  border: none;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  font-size: 0.9rem;
+}
+
+/* Buttons */
 button {
   background-color: var(--primary);
   color: white;
@@ -127,14 +149,56 @@ button:active {
   text-decoration: underline;
 }
 
+/* --- Feed & Filters (Horizontal Scroll) --- */
+.feed-header {
+  margin-bottom: 15px;
+}
+
+.filter-bar {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto; /* Enables horizontal scroll */
+  padding-bottom: 10px; /* Space for scrollbar if visible */
+  scrollbar-width: none; /* Firefox: hide scrollbar */
+  -ms-overflow-style: none; /* IE: hide scrollbar */
+}
+
+.filter-bar::-webkit-scrollbar {
+  display: none; /* Chrome/Safari: hide scrollbar */
+}
+
+.filter-btn {
+  flex: 0 0 auto; /* Prevents squishing */
+  width: auto;
+  padding: 8px 16px;
+  background: white;
+  color: #4b5563;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.filter-btn:hover {
+  background: #f3f4f6;
+  transform: none; /* Disable the bounce effect on filters */
+}
+
+.filter-btn.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+  box-shadow: 0 2px 5px rgba(37, 99, 235, 0.3);
+}
+
 /* --- Incident Cards --- */
 .card {
   background: white;
-  padding: 1.5rem;
   border-radius: 12px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   transition: transform 0.2s;
+  overflow: hidden; /* Keeps image inside rounded corners */
 }
 
 .card:hover {
@@ -142,16 +206,25 @@ button:active {
   box-shadow: 0 10px 15px rgba(0,0,0,0.05);
 }
 
+/* Card Image */
+.card-image img {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  display: block;
+}
+
 .card-header {
+  padding: 1.5rem 1.5rem 0.5rem 1.5rem;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 0.5rem;
 }
 
 .card-header h4 {
   margin: 0 0 5px 0;
-  font-size: 1.1rem;
+  font-size: 1.15rem;
+  color: #111827;
 }
 
 .type-badge {
@@ -165,16 +238,37 @@ button:active {
   letter-spacing: 0.05em;
 }
 
-.status-badge {
-  color: white;
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 700;
+/* Status Select & Badge */
+.status-container {
+  display: flex;
+  align-items: center;
+}
+
+.status-select {
+  padding: 4px 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 2px solid;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  width: auto;
+  margin: 0;
   text-transform: uppercase;
 }
 
+.status-badge-readonly {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: white;
+  letter-spacing: 0.5px;
+}
+
 .location {
+  padding: 0 1.5rem;
   font-weight: 500;
   color: #4b5563;
   margin: 5px 0;
@@ -182,22 +276,67 @@ button:active {
 }
 
 .description {
+  padding: 0 1.5rem;
   color: #374151;
   line-height: 1.5;
   margin-bottom: 1rem;
 }
 
+/* Card Footer */
 .card-footer {
+  background: #f9fafb;
+  padding: 10px 1.5rem;
   border-top: 1px solid #f3f4f6;
-  padding-top: 10px;
   display: flex;
   justify-content: space-between;
+  align-items: center;
   font-size: 0.85rem;
-  color: #9ca3af;
+  color: #6b7280;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+/* Verify Button */
+.upvote-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: auto;
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid #e5e7eb;
+  background: white;
+  color: #555;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.upvote-btn:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+  transform: translateY(-1px);
+}
+
+.upvote-btn.voted {
+  background: #eff6ff;
+  border-color: var(--primary);
+  color: var(--primary);
 }
 
 .no-data {
   text-align: center;
   color: #9ca3af;
   margin-top: 2rem;
+}
+
+.loading-text {
+  text-align: center;
+  color: #6b7280;
+  font-style: italic;
+  padding: 20px;
 }

@@ -6,44 +6,69 @@ import { Toaster, toast } from 'react-hot-toast';
 
 function App() {
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-  
-  // --- CONFIGURATION ---
-  const CLOUD_NAME = "dne0docy4"; // Your Cloudinary cloud name
-  const UPLOAD_PRESET = "citywatch_preset"; // Your unsigned upload preset
+  const CLOUD_NAME = "dne0docy4"; 
+  const UPLOAD_PRESET = "citywatch_preset"; 
+
+  // --- HELPERS ---
+  const parseJwt = (token) => {
+    try { return JSON.parse(atob(token.split('.')[1])); } catch (e) { return null; }
+  };
 
   // --- STATES ---
   const [token, setToken] = useState(localStorage.getItem('token'));
-  const [incidents, setIncidents] = useState([]);
   
-  // FORM DATA (Added imageFile state)
+  // We now store both ID (for upvotes) and Username (for permissions)
+  const [currentUser, setCurrentUser] = useState({ id: null, username: null, role: 'user' });
+  
+  const [incidents, setIncidents] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [filterType, setFilterType] = useState('All'); 
+
   const [formData, setFormData] = useState({ 
     title: '', location: '', description: '', type: 'General', isAnonymous: false 
   });
-  const [imageFile, setImageFile] = useState(null); // Stores the selected file
+  const [imageFile, setImageFile] = useState(null); 
   
-  // AUTH STATES
   const [view, setView] = useState('login'); 
   const [authData, setAuthData] = useState({ 
     username: '', email: '', password: '', resetToken: '', newPassword: '' 
   });
 
+  // --- INITIALIZATION ---
+  useEffect(() => {
+    if (token) {
+      const decoded = parseJwt(token);
+      if (decoded) {
+        // Assume the token payload has { id, username, role }
+        setCurrentUser({ 
+          id: decoded.id, 
+          username: decoded.username, 
+          role: decoded.role || 'user' 
+        });
+      }
+      fetchIncidents();
+    }
+  }, [token]);
+
   // --- ACTION: Fetch Incidents ---
   const fetchIncidents = async () => {
+    setIsLoading(true);
     try {
       const res = await axios.get(`${API_URL}/api/incidents`);
       setIncidents(res.data);
     } catch (err) {
-      console.error("Error fetching data:", err);
+      console.error(err);
       toast.error("Failed to load incidents");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  useEffect(() => { if (token) fetchIncidents(); }, [token]);
-
-  // --- EFFECT: Real-time Sockets ---
+  // --- REAL-TIME SOCKETS ---
   useEffect(() => {
     if (!token) return;
     const socket = io(API_URL);
+    
     socket.on('new_incident', (newIncident) => {
       setIncidents((prev) => {
         if (prev.find(i => i._id === newIncident._id)) return prev;
@@ -51,10 +76,17 @@ function App() {
         return [newIncident, ...prev];
       });
     });
+
+    socket.on('update_incident', (updatedIncident) => {
+      setIncidents((prev) => prev.map(inc => 
+        inc._id === updatedIncident._id ? updatedIncident : inc
+      ));
+    });
+
     return () => socket.disconnect();
   }, [token]);
 
-  // --- AUTH HANDLER ---
+  // --- HANDLERS (Auth & Submit) ---
   const handleAuthSubmit = async (e) => {
     e.preventDefault();
     const loader = toast.loading('Processing...');
@@ -84,45 +116,50 @@ function App() {
     }
   };
 
-  // --- INCIDENT SUBMIT (With Image Upload) ---
   const handleIncidentSubmit = async (e) => {
     e.preventDefault();
     const loader = toast.loading('Submitting...');
-
     try {
       let imageUrl = '';
-
-      // 1. Upload Image to Cloudinary (if selected)
       if (imageFile) {
         toast.loading('Uploading photo...', { id: loader });
         const imageFormData = new FormData();
         imageFormData.append("file", imageFile);
         imageFormData.append("upload_preset", UPLOAD_PRESET);
-
-        const cloudRes = await axios.post(
-          `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, 
-          imageFormData
-        );
+        const cloudRes = await axios.post(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, imageFormData);
         imageUrl = cloudRes.data.secure_url;
       }
 
-      // 2. Submit Incident to Backend
       const config = { headers: { Authorization: `Bearer ${token}` } };
       await axios.post(`${API_URL}/api/incidents`, { ...formData, imageUrl }, config);
       
       toast.dismiss(loader);
       toast.success('Report submitted!');
-      
-      // Reset form
       setFormData({ title: '', location: '', description: '', type: 'General', isAnonymous: false });
       setImageFile(null);
-      // Reset file input visually
       document.getElementById('fileInput').value = ""; 
-
     } catch (err) {
       toast.dismiss(loader);
-      console.error(err);
       toast.error("Failed to submit report.");
+    }
+  };
+
+  const handleUpvote = async (id) => {
+    try {
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      await axios.put(`${API_URL}/api/incidents/${id}/upvote`, {}, config);
+    } catch (err) {
+      toast.error("Could not vote");
+    }
+  };
+
+  const handleStatusChange = async (id, newStatus) => {
+    try {
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      await axios.put(`${API_URL}/api/incidents/${id}`, { status: newStatus }, config);
+      toast.success(`Status updated to ${newStatus}`);
+    } catch (err) {
+      toast.error("Failed to update status");
     }
   };
 
@@ -133,7 +170,12 @@ function App() {
     toast.success('Logged out');
   };
 
-  // --- RENDER AUTH (Unchanged) ---
+  // --- FILTER LOGIC ---
+  const filteredIncidents = filterType === 'All' 
+    ? incidents 
+    : incidents.filter(inc => inc.type === filterType);
+
+  // --- RENDER AUTH ---
   if (!token) {
     return (
       <div className="auth-container">
@@ -188,15 +230,9 @@ function App() {
             <input placeholder="Location" value={formData.location} required onChange={(e) => setFormData({...formData, location: e.target.value})} />
             <textarea placeholder="Description..." value={formData.description} required rows="3" onChange={(e) => setFormData({...formData, description: e.target.value})} />
             
-            {/* FILE UPLOAD INPUT */}
             <div className="file-upload-wrapper">
               <label style={{ fontSize: '0.9rem', marginBottom: '5px', display: 'block' }}>Attach Photo (Optional) 📸</label>
-              <input 
-                type="file" 
-                id="fileInput"
-                accept="image/*"
-                onChange={(e) => setImageFile(e.target.files[0])}
-              />
+              <input type="file" id="fileInput" accept="image/*" onChange={(e) => setImageFile(e.target.files[0])} />
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', margin: '15px 0', gap: '8px' }}>
@@ -209,35 +245,97 @@ function App() {
         </section>
 
         <section className="feed-section">
-          <h3>Recent Reports</h3>
-          {incidents.length === 0 && <p className="no-data">No reports yet.</p>}
+          <div className="feed-header">
+            <h3>Community Reports</h3>
+            {/* HORIZONTAL FILTERS */}
+            <div className="filter-bar">
+              {['All', 'Sanitation', 'Infrastructure', 'Traffic', 'Water'].map(type => (
+                <button 
+                  key={type} 
+                  onClick={() => setFilterType(type)}
+                  className={`filter-btn ${filterType === type ? 'active' : ''}`}
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {isLoading && <p className="loading-text">Loading...</p>}
+          {!isLoading && filteredIncidents.length === 0 && <p className="no-data">No reports found.</p>}
           
-          {incidents.map((incident) => {
+          {filteredIncidents.map((incident) => {
             const isHidden = incident.isAnonymous;
             const displayName = isHidden ? "Anonymous Citizen" : `@${incident.user}`;
             const dateString = incident.date || incident.createdAt;
-            const formattedDate = dateString ? new Date(dateString).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+            const formattedDate = dateString ? new Date(dateString).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
             const statusColor = incident.status === 'Resolved' ? '#10b981' : incident.status === 'In Progress' ? '#f59e0b' : '#ef4444';
+            
+            const votes = incident.upvotes || [];
+            const hasUpvoted = votes.includes(currentUser.id);
+            
+            // PERMISSION CHECK: Is this user the creator or an admin?
+            const canEditStatus = (currentUser.username === incident.user) || (currentUser.role === 'admin');
 
             return (
               <div key={incident._id} className="card" style={{ borderLeft: `5px solid ${statusColor}` }}>
-                {/* DISPLAY IMAGE IF EXISTS */}
                 {incident.imageUrl && (
                   <div className="card-image">
-                    <img src={incident.imageUrl} alt="Incident" style={{ width: '100%', maxHeight: '300px', objectFit: 'cover', borderRadius: '8px 8px 0 0' }} />
+                    <img src={incident.imageUrl} alt="Incident" />
                   </div>
                 )}
                 
                 <div className="card-header">
-                  <div><h4>{incident.title}</h4><span className="type-badge">{incident.type}</span></div>
-                  <span className="status-badge" style={{ backgroundColor: statusColor }}>{incident.status || 'Open'}</span>
+                  <div>
+                    <h4>{incident.title}</h4>
+                    <span className="type-badge">{incident.type}</span>
+                  </div>
+                  
+                  {/* STATUS SECTION: DROPDOWN OR BADGE */}
+                  {canEditStatus ? (
+                    <div className="status-container">
+                      <select 
+                        className="status-select"
+                        value={incident.status || 'Open'} 
+                        onChange={(e) => handleStatusChange(incident._id, e.target.value)}
+                        style={{ borderColor: statusColor, color: statusColor }}
+                      >
+                        <option value="Open">Open</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Resolved">Resolved</option>
+                      </select>
+                    </div>
+                  ) : (
+                    <span 
+                      className="status-badge-readonly" 
+                      style={{ backgroundColor: statusColor }}
+                    >
+                      {incident.status || 'Open'}
+                    </span>
+                  )}
                 </div>
+
                 <p className="location">📍 {incident.location}</p>
                 <p className="description">{incident.description}</p>
                 
                 <div className="card-footer">
-                  <span style={{ fontStyle: isHidden ? 'italic' : 'normal', fontWeight: isHidden ? '400' : '600' }}>👤 {displayName}</span>
-                  <span>🕒 {formattedDate}</span>
+                  <div className="user-info">
+                    <span style={{ fontStyle: isHidden ? 'italic' : 'normal', fontWeight: isHidden ? '400' : '600' }}>
+                      👤 {displayName}
+                    </span>
+                    
+                    {/* NEW VERIFY BUTTON */}
+                    <button 
+                      onClick={() => handleUpvote(incident._id)}
+                      className={`upvote-btn ${hasUpvoted ? 'voted' : ''}`}
+                      title="Verify this report"
+                    >
+                      👍 Verify 
+                      {votes.length > 0 && <span style={{ fontWeight: 'bold', marginLeft:'2px' }}>{votes.length}</span>}
+                    </button>
+                  </div>
+                  
+                  <span className="timestamp">🕒 {formattedDate}</span>
                 </div>
               </div>
             );
