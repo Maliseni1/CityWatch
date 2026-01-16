@@ -5,6 +5,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto'); // Built-in Node module
+const passport = require('../config/passport');
 
 // 1. SETUP EMAIL SENDER (Using Gmail for simplicity)
 // You need a generic Gmail account and an "App Password" (not your main login pass)
@@ -16,7 +17,30 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-// 2. REGISTER
+// --- GOOGLE AUTH ROUTES ---
+
+// 1. Redirect to Google
+router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+
+// 2. Google Callback
+router.get('/google/callback', 
+  passport.authenticate('google', { session: false, failureRedirect: '/login' }),
+  (req, res) => {
+    // Generate Token
+    const token = jwt.sign(
+      { id: req.user._id, username: req.user.username, role: req.user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+    
+    // Redirect back to Frontend with token
+    // We use the environment variable or fallback to localhost
+    const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+    res.redirect(`${FRONTEND_URL}?token=${token}`);
+  }
+);
+
+// 3. REGISTER
 router.post('/register', async (req, res) => {
   try {
     const { username, password, email } = req.body; // Added email
@@ -38,7 +62,7 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// 3. LOGIN
+// 4. LOGIN
 router.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -56,7 +80,7 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// 4. FORGOT PASSWORD (Request Link)
+// 5. FORGOT PASSWORD (Request Link)
 router.post('/forgot-password', async (req, res) => {
   const { email } = req.body;
   try {
@@ -92,7 +116,7 @@ router.post('/forgot-password', async (req, res) => {
   }
 });
 
-// 5. RESET PASSWORD (Verify Token & Update)
+// 6. RESET PASSWORD (Verify Token & Update)
 router.post('/reset-password', async (req, res) => {
   const { token, newPassword } = req.body;
   try {

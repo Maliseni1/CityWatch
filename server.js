@@ -4,6 +4,7 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const http = require('http'); 
 const { Server } = require('socket.io'); 
+const passport = require('passport');
 
 const incidentRoutes = require('./routes/incidentRoutes');
 const authRoutes = require('./routes/authRoutes');
@@ -37,6 +38,8 @@ app.use(cors({
   origin: allowedOrigins,
   credentials: true
 }));
+
+app.use(passport.initialize());
 
 app.use(express.json());
 

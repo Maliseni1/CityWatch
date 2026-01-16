@@ -6,7 +6,10 @@ import { Toaster, toast } from 'react-hot-toast';
 import { usePostHog } from 'posthog-js/react'; 
 
 function App() {
+  // --- STATES ---
+  const [showPassword, setShowPassword] = useState(false); // Toggle for password visibility
   const posthog = usePostHog();
+  
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   const CLOUD_NAME = "dne0docy4"; 
   const UPLOAD_PRESET = "citywatch_preset"; 
@@ -16,10 +19,9 @@ function App() {
     try { return JSON.parse(atob(token.split('.')[1])); } catch (e) { return null; }
   };
 
-  // --- STATES ---
   const [showForm, setShowForm] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false); // Hamburger menu state
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'system'); // Theme state
+  const [isMenuOpen, setIsMenuOpen] = useState(false); 
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'system'); 
 
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [currentUser, setCurrentUser] = useState({ id: null, username: null, role: 'user' });
@@ -37,12 +39,11 @@ function App() {
     username: '', email: '', password: '', resetToken: '', newPassword: '' 
   });
 
-  const menuRef = useRef(null); // To close menu when clicking outside
+  const menuRef = useRef(null); 
 
   // --- THEME LOGIC ---
   useEffect(() => {
     const root = document.documentElement;
-    
     const applyTheme = (selectedTheme) => {
       if (selectedTheme === 'system') {
         const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -51,16 +52,11 @@ function App() {
         root.setAttribute('data-theme', selectedTheme);
       }
     };
-
     applyTheme(theme);
     localStorage.setItem('theme', theme);
 
-    // Listener for system changes if in system mode
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = () => {
-      if (theme === 'system') applyTheme('system');
-    };
-    
+    const handleChange = () => { if (theme === 'system') applyTheme('system'); };
     mediaQuery.addEventListener('change', handleChange);
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, [theme]);
@@ -78,19 +74,40 @@ function App() {
 
   // --- INITIALIZATION ---
   useEffect(() => {
-    if (token) {
-      const decoded = parseJwt(token);
+    // 1. Check URL for Google Token
+    const params = new URLSearchParams(window.location.search);
+    const urlToken = params.get('token');
+
+    if (urlToken) {
+      localStorage.setItem('token', urlToken);
+      setToken(urlToken);
+      // Remove token from URL for cleaner look
+      window.history.replaceState({}, document.title, window.location.pathname);
+      toast.success("Logged in with Google!");
+    }
+
+    // 2. Check LocalStorage (Standard check)
+    const storedToken = urlToken || token; // Use new token if available
+    
+    if (storedToken) {
+      const decoded = parseJwt(storedToken);
       if (decoded) {
         setCurrentUser({ 
           id: decoded.id, 
           username: decoded.username, 
           role: decoded.role || 'user' 
         });
+        
+        // PostHog Identification for Google Users
+        if (decoded.id) {
+            posthog.identify(decoded.id, { username: decoded.username });
+        }
       }
       fetchIncidents();
     }
-  }, [token]);
+  }, [token]); // Run when 'token' state changes
 
+  
   // --- ACTION: Fetch Incidents ---
   const fetchIncidents = async () => {
     setIsLoading(true);
@@ -139,12 +156,12 @@ function App() {
         localStorage.setItem('token', receivedToken);
         setToken(receivedToken);
         
-        // --- FIX: Safely identify user from Token instead of response ---
+        // PostHog Identify
         const decodedUser = parseJwt(receivedToken);
         if (decodedUser?.id) {
           posthog.identify(decodedUser.id, {
             username: decodedUser.username,
-            email: decodedUser.email // Only if your token contains email
+            email: decodedUser.email 
           });
           posthog.capture('user_login');
         }
@@ -166,7 +183,7 @@ function App() {
       toast.dismiss(loader);
     } catch (err) {
       toast.dismiss(loader);
-      console.error(err); // This helps see the real error in console
+      console.error(err);
       toast.error(err.response?.data?.message || 'Action failed');
     }
   };
@@ -188,7 +205,6 @@ function App() {
       const config = { headers: { Authorization: `Bearer ${token}` } };
       await axios.post(`${API_URL}/api/incidents`, { ...formData, imageUrl }, config);
       
-      // TRACKING
       posthog.capture('incident_reported', {
         category: formData.type,
         location: formData.location,
@@ -212,6 +228,7 @@ function App() {
     try {
       const config = { headers: { Authorization: `Bearer ${token}` } };
       await axios.put(`${API_URL}/api/incidents/${id}/upvote`, {}, config);
+      posthog.capture('incident_upvoted', { incident_id: id });
     } catch (err) {
       toast.error("Could not vote");
     }
@@ -221,10 +238,6 @@ function App() {
     try {
       const config = { headers: { Authorization: `Bearer ${token}` } };
       await axios.put(`${API_URL}/api/incidents/${id}`, { status: newStatus }, config);
-
-      // TRACKING
-      posthog.capture('incident_upvoted', { incident_id: id });
-
       toast.success(`Status updated to ${newStatus}`);
     } catch (err) {
       toast.error("Failed to update status");
@@ -240,7 +253,7 @@ function App() {
 
   const handleThemeChange = (newTheme) => {
     setTheme(newTheme);
-    setIsMenuOpen(false); // Close menu on selection
+    setIsMenuOpen(false); 
   };
 
   // --- FILTER LOGIC ---
@@ -262,11 +275,73 @@ function App() {
             {view === 'reset' && 'Set a new password'}
           </p>
           <form onSubmit={handleAuthSubmit}>
-            {(view === 'login' || view === 'register') && <input type="text" placeholder="Username" required value={authData.username} onChange={(e) => setAuthData({...authData, username: e.target.value})} />}
-            {(view === 'register' || view === 'forgot') && <input type="email" placeholder="Email Address" required value={authData.email} onChange={(e) => setAuthData({...authData, email: e.target.value})} />}
-            {(view === 'login' || view === 'register') && <input type="password" placeholder="Password" required value={authData.password} onChange={(e) => setAuthData({...authData, password: e.target.value})} />}
-            {view === 'reset' && <><input type="text" placeholder="Paste Token from Email" required value={authData.resetToken} onChange={(e) => setAuthData({...authData, resetToken: e.target.value})} /><input type="password" placeholder="New Password" required value={authData.newPassword} onChange={(e) => setAuthData({...authData, newPassword: e.target.value})} /></>}
-            <button type="submit">{view === 'login' ? 'Login' : view === 'register' ? 'Sign Up' : view === 'forgot' ? 'Send Recovery Email' : 'Reset Password'}</button>
+            {(view === 'login' || view === 'register') && (
+              <input type="text" placeholder="Username" required value={authData.username} onChange={(e) => setAuthData({...authData, username: e.target.value})} />
+            )}
+            
+            {(view === 'register' || view === 'forgot') && (
+              <input type="email" placeholder="Email Address" required value={authData.email} onChange={(e) => setAuthData({...authData, email: e.target.value})} />
+            )}
+            
+            {(view === 'login' || view === 'register') && (
+              <div className="password-wrapper">
+                <input 
+                  type={showPassword ? "text" : "password"} 
+                  placeholder="Password" 
+                  required 
+                  value={authData.password} 
+                  onChange={(e) => setAuthData({...authData, password: e.target.value})} 
+                />
+                <button 
+                  type="button" 
+                  className="password-toggle-btn"
+                  onClick={() => setShowPassword(!showPassword)}
+                  title={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? '🙈' : '👁️'}
+                </button>
+              </div>
+            )}
+
+            {view === 'reset' && (
+              <>
+                <input type="text" placeholder="Paste Token from Email" required value={authData.resetToken} onChange={(e) => setAuthData({...authData, resetToken: e.target.value})} />
+                <div className="password-wrapper">
+                  <input 
+                    type={showPassword ? "text" : "password"} 
+                    placeholder="New Password" 
+                    required 
+                    value={authData.newPassword} 
+                    onChange={(e) => setAuthData({...authData, newPassword: e.target.value})} 
+                  />
+                  <button 
+                    type="button" 
+                    className="password-toggle-btn"
+                    onClick={() => setShowPassword(!showPassword)}
+                    title={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? '🙈' : '👁️'}
+                  </button>
+                </div>
+              </>
+            )}
+
+            <button type="submit" style={{ marginTop: '10px' }}>
+              {view === 'login' ? 'Login' : view === 'register' ? 'Sign Up' : view === 'forgot' ? 'Send Recovery Email' : 'Reset Password'}
+            </button>
+
+            {/* GOOGLE LOGIN BUTTON */}
+            {view === 'login' && (
+              <button 
+                type="button" 
+                className="google-btn"
+                onClick={() => window.location.href = `${API_URL}/api/auth/google`} 
+              >
+                <img src="https://img.icons8.com/color/16/000000/google-logo.png" alt="G" />
+                Sign in with Google
+              </button>
+            )}
+
           </form>
           <div style={{marginTop: '15px', fontSize: '0.9rem'}}>
             {view === 'login' && <><p className="toggle-link" onClick={() => setView('register')}>Create an account</p><p className="toggle-link" onClick={() => setView('forgot')}>Forgot Password?</p></>}
@@ -438,7 +513,7 @@ function App() {
                       className="status-badge-readonly" 
                       style={{ 
                         backgroundColor: statusColor, 
-                        color: '#ffffff', /* Force white text for readability on colored badges */
+                        color: '#ffffff', 
                         padding: '4px 10px',
                         borderRadius: '6px',
                         fontSize: '0.75rem',
