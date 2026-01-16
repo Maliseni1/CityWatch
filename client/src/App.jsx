@@ -3,8 +3,10 @@ import axios from 'axios';
 import './App.css';
 import { io } from 'socket.io-client';
 import { Toaster, toast } from 'react-hot-toast';
+import { usePostHog } from 'posthog-js/react'; 
 
 function App() {
+  const posthog = usePostHog();
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   const CLOUD_NAME = "dne0docy4"; 
   const UPLOAD_PRESET = "citywatch_preset"; 
@@ -135,6 +137,13 @@ function App() {
         localStorage.setItem('token', res.data.token);
         setToken(res.data.token);
         toast.success('Welcome back!');
+        // TRACKING: Identify the user
+        posthog.identify(res.data.user.id, {
+          username: res.data.user.username,
+          email: res.data.user.email
+        });
+        posthog.capture('user_login'); // explicit event
+        
       } else if (view === 'register') {
         await axios.post(`${API_URL}/api/auth/register`, { username: authData.username, email: authData.email, password: authData.password });
         toast.success('Account created! Please login.');
@@ -172,6 +181,14 @@ function App() {
       const config = { headers: { Authorization: `Bearer ${token}` } };
       await axios.post(`${API_URL}/api/incidents`, { ...formData, imageUrl }, config);
       
+      // TRACKING
+      posthog.capture('incident_reported', {
+        category: formData.type,
+        location: formData.location,
+        has_image: !!imageFile,
+        is_anonymous: formData.isAnonymous
+      });
+
       toast.dismiss(loader);
       toast.success('Report submitted!');
       setFormData({ title: '', location: '', description: '', type: 'General', isAnonymous: false });
@@ -197,6 +214,10 @@ function App() {
     try {
       const config = { headers: { Authorization: `Bearer ${token}` } };
       await axios.put(`${API_URL}/api/incidents/${id}`, { status: newStatus }, config);
+
+      // TRACKING
+      posthog.capture('incident_upvoted', { incident_id: id });
+
       toast.success(`Status updated to ${newStatus}`);
     } catch (err) {
       toast.error("Failed to update status");

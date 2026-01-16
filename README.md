@@ -1,105 +1,91 @@
-# 🏙️ CityWatch - Crowd-Sourced Incident Reporter
+# CityWatch 🇿🇲 - Citizen Reporting Platform
 
-**CityWatch** is a full-stack real-time application that allows communities to report local issues (like potholes, broken streetlights, or fires) and track them on a live feed.
+CityWatch is a real-time civic engagement platform designed for Zambia. It empowers citizens to report public issues (sanitation, infrastructure, traffic, water) directly to community leaders and track the resolution status in real-time.
 
-Built as part of the **Full-Stack Development Internship at Codveda**.
+## ✨ Key Features
 
-![MERN Stack](https://img.shields.io/badge/MERN-Stack-green) ![Status](https://img.shields.io/badge/Status-Completed-blue)
-
----
-
-## 🚀 Features
-
-* **Real-Time Updates:** New incidents appear instantly on all connected clients using **Socket.io** (no page refresh needed).
-* **User Authentication:** Secure Login and Registration system using **JWT (JSON Web Tokens)**.
-* **Incident Reporting:** Users can post titles, descriptions, and locations of incidents.
-* **Live Dashboard:** View all reported incidents with their status (Open/Resolved).
-* **Responsive UI:** Clean, modern interface built with **React** and **CSS Flexbox**.
-
----
+- **📍 Geolocation Tagging**: Reports automatically include location data.
+- **📸 Photo Evidence**: Integration with Cloudinary for secure image uploads.
+- **🌗 Dark/Light Mode**: Fully responsive theme toggle (System, Dark, Light) for better accessibility.
+- **⚡ Real-Time Updates**: Powered by **Socket.io**, new reports and status changes appear instantly without refreshing.
+- **👍 Community Validation**: Upvote system ("Verify") to highlight urgent issues.
+- **🚦 Status Tracking**: Admins can update status (Open → In Progress → Resolved) with color-coded badges.
 
 ## 🛠️ Tech Stack
 
-| Domain | Technologies Used |
-| :--- | :--- |
-| **Frontend** | React.js (Vite), Axios, Socket.io-Client, CSS3 |
-| **Backend** | Node.js, Express.js |
-| **Database** | MongoDB, Mongoose |
-| **Real-Time** | Socket.io |
-| **Authentication** | JWT, Bcrypt.js |
+**MERN Stack + Real-time capabilities**
 
----
+- **Frontend**: React (Vite), CSS Variables (Theming), Axios
+- **Backend**: Node.js, Express.js
+- **Database**: MongoDB (Atlas)
+- **Real-Time**: Socket.io
+- **Storage**: Cloudinary (Image hosting)
+- **Authentication**: JWT (JSON Web Tokens)
 
-## 📂 Project Structure
+## 🚀 Getting Started
 
-This project follows a Monorepo structure:
+### Prerequisites
+- Node.js (v14 or higher)
+- MongoDB Connection URI
+- Cloudinary Account (for images)
 
-```bash
-CityWatch/
-├── client/           # React Frontend Application
-│   ├── src/
-│   │   ├── App.jsx   # Main Logic (Auth + Real-time Sockets)
-│   │   └── App.css   # Styling
-├── models/           # Mongoose Database Models (User, Incident)
-├── routes/           # Express API Routes
-├── server.js         # Backend Entry Point (Express + Socket.io)
-└── .env              # Environment Variables (Not included in repo)
+### Installation
 
+1. **Clone the repository**
+   ```bash
+   git clone [https://github.com/Maliseni1/citywatch.git](https://github.com/your-username/citywatch.git)
+   cd citywatch-zambia
 
-⚙️ How to Run Locally
-
-Follow these steps to set up the project on your machine.
-1. Clone the Repository
+*Install Server Dependencies*
 Bash
 
-git clone [https://github.com/Maliseni1/CityWatch.git](https://github.com/Maliseni1/CityWatch.git)
-cd CityWatch
+    cd server
+    npm install
 
-2. Setup Backend
-
-Install server dependencies and start the backend.
+*Install Client Dependencies*
 Bash
 
-# Install dependencies
-npm install
+    cd ../client
+    npm install
 
-# Create a .env file in the root directory and add:
-# MONGO_URI=mongodb://localhost:27017/citywatch
-# PORT=5000
-# JWT_SECRET=your_secret_key
+**🔐 Environment Variables**
 
-# Start the server
-Bash
-npx nodemon server.js
+Create a .env file in the root folder:
+Code snippet
 
-3. Setup Frontend
+    PORT=5000
+    MONGO_URI=your_mongodb_connection_string
+    JWT_SECRET=your_jwt_secret_key
 
-Open a new terminal, navigate to the client folder, and start React.
-Bash
+Create a .env file in the client folder:
+Code snippet
 
-cd client
-npm install
-npm run dev
+VITE_API_URL=http://localhost:5000
 
-Visit http://localhost:5173 in your browser.
+**🏃‍♂️ Running the App**
 
+    Start the Backend (Terminal 1, in the root folder)
+    Bash
 
-📝 Internship Tasks Completed
+    cd ..
+    npm run dev
 
-This project satisfies 3 Tasks across all levels of the Codveda Internship Task List:
+    Start the Frontend (Terminal 2)
+    Bash
 
-    ✅ Level 1 (Basic): Built a REST API with Node.js/Express & MongoDB CRUD operations.
+    cd client
+    npm run dev
 
-    ✅ Level 2 (Intermediate): Created a Frontend with React and implemented JWT Authentication.
+**📱 Usage**
 
-    ✅ Level 3 (Advanced): Implemented WebSockets for real-time bidirectional communication.
+    Register/Login to start reporting.
 
+    Click "Report Incident", fill in the details, and upload a photo.
 
+    Watch the feed update automatically!
 
-📬 Contact
+    Switch themes using the Menu (☰) button.
 
-Developer: [MALISENI CHAVULA]
+**🤝 Contributing**
 
-Internship: Codveda Full-Stack Development
-
-LinkedIn: [https://www.linkedin.com/in/maliseni-chavula-b162953a0]
+Contributions are welcome! Please feel free to submit a Pull Request.
