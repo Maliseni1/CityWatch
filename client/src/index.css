@@ -536,3 +536,125 @@ button:active {
     font-size: 0.8rem;
   }
 }
+
+/* =========================================
+   📱 MOBILE OPTIMIZATION (Paste at bottom of index.css)
+   ========================================= */
+
+/* 1. Prevent Auto-Zoom on iPhone Inputs */
+input, select, textarea {
+  font-size: 16px !important; 
+}
+
+@media screen and (max-width: 768px) {
+
+  /* --- Global Layout --- */
+  .app-container {
+    padding-bottom: 80px; /* Space for footer */
+    overflow-x: hidden;   /* Stop side-scrolling */
+  }
+
+  .main-content {
+    width: 95%;      /* Use almost full screen width */
+    padding: 10px;
+    margin: 0 auto;  /* Center it */
+  }
+
+  /* --- Login / Auth Screen --- */
+  .auth-box {
+    width: 90% !important;   /* Force width to fit screen */
+    min-width: auto;         /* Remove desktop constraints */
+    margin: 10vh auto;       /* Center vertically */
+    padding: 20px;
+  }
+
+  /* Stack the "Forgot Password | Create Account" links if screen is tiny */
+  .auth-box div[style*="display: flex"] {
+    flex-wrap: wrap;
+  }
+
+  /* --- Incident Form --- */
+  .form-section {
+    padding: 15px;
+  }
+
+  .input-group {
+    flex-direction: column; /* Stack Title on top of Type */
+    gap: 10px;
+  }
+
+  .input-group input, 
+  .input-group select {
+    width: 100%;
+  }
+
+  /* --- Incident Feed Cards --- */
+  .card {
+    padding: 15px;
+    margin-bottom: 15px;
+  }
+
+  .card-header {
+    flex-direction: column; /* Stack Title and Status */
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .status-container, .status-badge-readonly {
+    width: 100%;
+    margin-top: 5px;
+  }
+  
+  .status-select {
+    width: 100%; /* Make dropdown easy to tap */
+  }
+
+  .card-footer {
+    flex-direction: column; /* Stack User and Date */
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .upvote-btn {
+    width: 100%;       /* Full width button for easier tapping */
+    justify-content: center;
+    padding: 12px;     /* Taller button */
+    margin-top: 8px;
+  }
+
+  /* --- Navigation --- */
+  .app-header {
+    padding: 15px;
+    position: sticky;
+    top: 0;
+    z-index: 999;
+  }
+
+  .app-header h1 {
+    font-size: 1.3rem;
+  }
+
+  /* --- Filter Buttons (Swipeable) --- */
+  .filter-bar {
+    display: flex;
+    overflow-x: auto;       /* Enable horizontal scroll */
+    padding-bottom: 10px;   /* Space for scrollbar */
+    gap: 10px;
+    -webkit-overflow-scrolling: touch; /* Smooth iOS scroll */
+  }
+
+  .filter-btn {
+    flex: 0 0 auto;         /* Don't squish buttons */
+    padding: 8px 16px;
+    font-size: 0.9rem;
+  }
+  
+  /* --- Hide Scrollbar visually but keep functionality --- */
+  .filter-bar::-webkit-scrollbar {
+    height: 4px;
+  }
+  .filter-bar::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 4px;
+  }
+}

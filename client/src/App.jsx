@@ -579,10 +579,10 @@ function App() {
 
       {/* MAIN APP FOOTER */}
       <footer style={{ 
-        textAlign: 'center', 
+        marginTop: 'auto',      // Pushes it to bottom if using flex column
         padding: '20px', 
-        marginTop: '40px', 
-        borderTop: '1px solid var(--border-color)', 
+        width: '100%', 
+        textAlign: 'center', 
         color: 'var(--text-muted)',
         fontSize: '0.85rem'
       }}>
