@@ -134,16 +134,22 @@ function App() {
     try {
       if (view === 'login') {
         const res = await axios.post(`${API_URL}/api/auth/login`, { username: authData.username, password: authData.password });
-        localStorage.setItem('token', res.data.token);
-        setToken(res.data.token);
-        toast.success('Welcome back!');
-        // TRACKING: Identify the user
-        posthog.identify(res.data.user.id, {
-          username: res.data.user.username,
-          email: res.data.user.email
-        });
-        posthog.capture('user_login'); // explicit event
         
+        const receivedToken = res.data.token;
+        localStorage.setItem('token', receivedToken);
+        setToken(receivedToken);
+        
+        // --- FIX: Safely identify user from Token instead of response ---
+        const decodedUser = parseJwt(receivedToken);
+        if (decodedUser?.id) {
+          posthog.identify(decodedUser.id, {
+            username: decodedUser.username,
+            email: decodedUser.email // Only if your token contains email
+          });
+          posthog.capture('user_login');
+        }
+
+        toast.success('Welcome back!');
       } else if (view === 'register') {
         await axios.post(`${API_URL}/api/auth/register`, { username: authData.username, email: authData.email, password: authData.password });
         toast.success('Account created! Please login.');
@@ -160,6 +166,7 @@ function App() {
       toast.dismiss(loader);
     } catch (err) {
       toast.dismiss(loader);
+      console.error(err); // This helps see the real error in console
       toast.error(err.response?.data?.message || 'Action failed');
     }
   };
