@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import './App.css';
 import { io } from 'socket.io-client';
@@ -15,9 +15,11 @@ function App() {
   };
 
   // --- STATES ---
-  const [showForm, setShowForm] = useState(false); // <--- New state for form toggle
+  const [showForm, setShowForm] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false); // Hamburger menu state
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'system'); // Theme state
+
   const [token, setToken] = useState(localStorage.getItem('token'));
-  
   const [currentUser, setCurrentUser] = useState({ id: null, username: null, role: 'user' });
   const [incidents, setIncidents] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -32,6 +34,45 @@ function App() {
   const [authData, setAuthData] = useState({ 
     username: '', email: '', password: '', resetToken: '', newPassword: '' 
   });
+
+  const menuRef = useRef(null); // To close menu when clicking outside
+
+  // --- THEME LOGIC ---
+  useEffect(() => {
+    const root = document.documentElement;
+    
+    const applyTheme = (selectedTheme) => {
+      if (selectedTheme === 'system') {
+        const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        root.setAttribute('data-theme', systemDark ? 'dark' : 'light');
+      } else {
+        root.setAttribute('data-theme', selectedTheme);
+      }
+    };
+
+    applyTheme(theme);
+    localStorage.setItem('theme', theme);
+
+    // Listener for system changes if in system mode
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = () => {
+      if (theme === 'system') applyTheme('system');
+    };
+    
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, [theme]);
+
+  // --- CLOSE MENU ON CLICK OUTSIDE ---
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [menuRef]);
 
   // --- INITIALIZATION ---
   useEffect(() => {
@@ -84,7 +125,7 @@ function App() {
     return () => socket.disconnect();
   }, [token]);
 
-  // --- HANDLERS (Auth & Submit) ---
+  // --- HANDLERS ---
   const handleAuthSubmit = async (e) => {
     e.preventDefault();
     const loader = toast.loading('Processing...');
@@ -136,7 +177,7 @@ function App() {
       setFormData({ title: '', location: '', description: '', type: 'General', isAnonymous: false });
       setImageFile(null);
       document.getElementById('fileInput').value = ""; 
-      setShowForm(false); // Close form after submit
+      setShowForm(false); 
     } catch (err) {
       toast.dismiss(loader);
       toast.error("Failed to submit report.");
@@ -167,6 +208,11 @@ function App() {
     setToken(null);
     setIncidents([]);
     toast.success('Logged out');
+  };
+
+  const handleThemeChange = (newTheme) => {
+    setTheme(newTheme);
+    setIsMenuOpen(false); // Close menu on selection
   };
 
   // --- FILTER LOGIC ---
@@ -207,20 +253,53 @@ function App() {
   return (
     <div className="app-container">
       <Toaster position="top-right" />
+      
+      {/* HEADER WITH HAMBURGER MENU */}
       <header className="app-header">
         <h1>CityWatch 🇿🇲</h1>
-        <button onClick={logout} className="logout-btn">Logout</button>
+        
+        {/* Menu Container */}
+        <div style={{ position: 'relative' }} ref={menuRef}>
+          <button 
+            onClick={() => setIsMenuOpen(!isMenuOpen)} 
+            className="menu-btn"
+            aria-label="Menu"
+          >
+            ☰
+          </button>
+
+          {/* Dropdown Content */}
+          {isMenuOpen && (
+            <div className="dropdown-menu">
+              <div className="dropdown-item" onClick={() => handleThemeChange('light')}>
+                {theme === 'light' ? '●' : '○'} Light Mode ☀️
+              </div>
+              <div className="dropdown-item" onClick={() => handleThemeChange('dark')}>
+                {theme === 'dark' ? '●' : '○'} Dark Mode 🌙
+              </div>
+              <div className="dropdown-item" onClick={() => handleThemeChange('system')}>
+                {theme === 'system' ? '●' : '○'} System Auto 💻
+              </div>
+              
+              <div className="dropdown-divider"></div>
+              
+              <div className="dropdown-item" onClick={logout} style={{ color: '#ef4444', fontWeight: 'bold' }}>
+                🚪 Logout
+              </div>
+            </div>
+          )}
+        </div>
       </header>
 
       <main className="main-content">
         
-        {/* TOGGLE BUTTON SECTION */}
+        {/* TOGGLE BUTTON */}
         <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'flex-end' }}>
           <button 
             onClick={() => setShowForm(!showForm)}
             style={{ 
               width: 'auto', 
-              background: showForm ? '#ef4444' : '#2563eb', // Red if open, Blue if closed
+              background: showForm ? '#ef4444' : '#2563eb', 
               display: 'flex', 
               alignItems: 'center', 
               gap: '8px',
@@ -231,7 +310,7 @@ function App() {
           </button>
         </div>
 
-        {/* FORM SECTION (Only shows if showForm is true) */}
+        {/* FORM SECTION */}
         {showForm && (
           <section className="form-section" style={{ animation: 'fadeIn 0.3s ease' }}>
             <h3>📢 Report an Incident</h3>
@@ -256,7 +335,7 @@ function App() {
 
               <div style={{ display: 'flex', alignItems: 'center', margin: '15px 0', gap: '8px' }}>
                 <input type="checkbox" id="anonCheck" checked={formData.isAnonymous} onChange={(e) => setFormData({...formData, isAnonymous: e.target.checked})} style={{ width: 'auto', margin: 0 }} />
-                <label htmlFor="anonCheck" style={{ fontSize: '0.9rem', color: '#555', cursor: 'pointer' }}>Post Anonymously 🕵️</label>
+                <label htmlFor="anonCheck" style={{ fontSize: '0.9rem', color: 'var(--text-main)', cursor: 'pointer' }}>Post Anonymously 🕵️</label>
               </div>
 
               <button type="submit">Submit Report</button>
@@ -329,7 +408,15 @@ function App() {
                   ) : (
                     <span 
                       className="status-badge-readonly" 
-                      style={{ backgroundColor: statusColor }}
+                      style={{ 
+                        backgroundColor: statusColor, 
+                        color: '#ffffff', /* Force white text for readability on colored badges */
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        fontSize: '0.75rem',
+                        fontWeight: 'bold',
+                        textTransform: 'uppercase'
+                      }}
                     >
                       {incident.status || 'Open'}
                     </span>

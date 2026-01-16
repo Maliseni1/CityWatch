@@ -28,7 +28,9 @@ const io = new Server(server, {
 
 // 3. Express CORS Middleware
 app.use(cors({
-  origin: allowedOrigins
+  // Add 5174 to this list
+  origin: ["http://localhost:5173", "http://localhost:5174"], 
+  credentials: true
 }));
 
 app.use(express.json());

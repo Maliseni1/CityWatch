@@ -1,221 +1,225 @@
-/* Import Google Font */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
+/* --- THEME VARIABLES --- */
 :root {
+  /* Default (Light) */
   --primary: #2563eb;
   --bg-color: #f3f4f6;
   --card-bg: #ffffff;
   --text-main: #1f2937;
   --text-muted: #6b7280;
-  --success: #10b981;
-  --warning: #f59e0b;
-  --danger: #ef4444;
+  --border-color: #e5e7eb;
+  --input-bg: #ffffff;
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
-body {
-  font-family: 'Inter', sans-serif;
+/* Dark Theme - Pure Black Canvas */
+[data-theme='dark'] {
+  --primary: #60a5fa;       /* Lighter Blue for visibility */
+  --bg-color: #000000;      /* PURE BLACK Background */
+  --card-bg: #111111;       /* Very Dark Grey Cards */
+  --text-main: #e5e5e5;     /* High Contrast White Text */
+  --text-muted: #a3a3a3;    /* Grey Text */
+  --border-color: #333333;  /* Dark Borders */
+  --input-bg: #111111;      /* Dark Inputs */
+  --shadow: none;           /* Flat look for pure dark mode */
+}
+
+/* --- GLOBAL RESET & LAYOUT --- */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
   background-color: var(--bg-color);
   color: var(--text-main);
-  margin: 0;
-  -webkit-font-smoothing: antialiased;
+  font-family: 'Inter', sans-serif;
+  transition: background-color 0.4s ease, color 0.4s ease;
+  width: 100%;
 }
 
-/* --- Layout --- */
+#root {
+  min-height: 100vh;
+  width: 100%;
+  background-color: var(--bg-color);
+  display: flex;
+  flex-direction: column;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-main);
+  margin-top: 0;
+}
+
+/* Container for the whole app content */
 .app-container {
   max-width: 800px;
   margin: 0 auto;
   padding: 20px;
-}
-
-.auth-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  background: linear-gradient(135deg, #e0e7ff 0%, #f3f4f6 100%);
-  padding: 20px;
-}
-
-.auth-box {
-  background: white;
-  padding: 2rem;
-  border-radius: 16px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
   width: 100%;
-  max-width: 400px;
-  text-align: center;
+  box-sizing: border-box;
 }
 
-/* --- Header --- */
+/* --- HEADER & MENU (RESTORED) --- */
 .app-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
   padding-bottom: 1rem;
-  border-bottom: 2px solid #e5e7eb;
+  border-bottom: 2px solid var(--border-color);
+  position: relative;
 }
 
 .app-header h1 {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--text-main);
   margin: 0;
-  font-size: 1.5rem;
-  color: #111827;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-/* --- Forms --- */
+.menu-btn {
+  background: transparent;
+  color: var(--text-main);
+  border: none;
+  font-size: 1.8rem;
+  padding: 5px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.menu-btn:hover {
+  color: var(--primary);
+  transform: scale(1.1);
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 60px;
+  right: 0;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  width: 200px;
+  z-index: 100;
+  padding: 10px;
+  animation: fadeIn 0.2s ease;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  cursor: pointer;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  color: var(--text-main);
+}
+
+.dropdown-item:hover {
+  background-color: rgba(128, 128, 128, 0.1);
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 8px 0;
+}
+
+/* --- AUTH SCREENS --- */
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--bg-color) 0%, var(--card-bg) 100%);
+  padding: 20px;
+}
+
+.auth-box {
+  background: var(--card-bg);
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  border: 1px solid var(--border-color);
+}
+
+.toggle-link {
+  margin-top: 15px;
+  color: var(--primary);
+  cursor: pointer;
+  font-size: 0.9rem;
+  text-decoration: underline;
+  transition: opacity 0.2s;
+  display: inline-block;
+}
+
+.toggle-link:hover {
+  opacity: 0.8;
+}
+
+/* --- FORMS --- */
 .form-section {
-  background: white;
+  background: var(--card-bg);
   padding: 1.5rem;
   border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow);
   margin-bottom: 2rem;
+  border: 1px solid var(--border-color);
 }
 
 input, select, textarea {
   width: 100%;
   padding: 12px;
   margin-bottom: 12px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
+  background-color: var(--input-bg);
+  color: var(--text-main);
   font-size: 1rem;
-  box-sizing: border-box; 
-  transition: border 0.2s;
+  box-sizing: border-box;
   font-family: inherit;
 }
 
 input:focus, select:focus, textarea:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
-.input-group {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 10px;
-}
-
-/* File Upload specific styles */
 .file-upload-wrapper {
   margin-bottom: 15px;
   padding: 10px;
-  background: #f9fafb;
-  border: 1px dashed #d1d5db;
+  background: rgba(128, 128, 128, 0.05);
+  border: 1px dashed var(--border-color);
   border-radius: 8px;
+  color: var(--text-main);
 }
 
-.file-upload-wrapper input[type="file"] {
-  border: none;
-  padding: 0;
-  margin: 0;
-  background: transparent;
-  font-size: 0.9rem;
-}
-
-/* Buttons */
-button {
-  background-color: var(--primary);
-  color: white;
-  padding: 12px 20px;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  width: 100%;
-  font-size: 1rem;
-  transition: transform 0.1s, background-color 0.2s;
-}
-
-button:hover {
-  background-color: #1d4ed8;
-}
-
-button:active {
-  transform: scale(0.98);
-}
-
-.logout-btn {
-  background-color: #ef4444;
-  width: auto;
-  padding: 8px 16px;
-  font-size: 0.9rem;
-}
-
-.toggle-link {
-  color: var(--primary);
-  cursor: pointer;
-  margin-top: 1rem;
-  font-size: 0.9rem;
-  text-decoration: underline;
-}
-
-/* --- Feed & Filters (Horizontal Scroll) --- */
-.feed-header {
-  margin-bottom: 15px;
-}
-
-.filter-bar {
-  display: flex;
-  gap: 10px;
-  overflow-x: auto; /* Enables horizontal scroll */
-  padding-bottom: 10px; /* Space for scrollbar if visible */
-  scrollbar-width: none; /* Firefox: hide scrollbar */
-  -ms-overflow-style: none; /* IE: hide scrollbar */
-}
-
-.filter-bar::-webkit-scrollbar {
-  display: none; /* Chrome/Safari: hide scrollbar */
-}
-
-.filter-btn {
-  flex: 0 0 auto; /* Prevents squishing */
-  width: auto;
-  padding: 8px 16px;
-  background: white;
-  color: #4b5563;
-  border: 1px solid #e5e7eb;
-  border-radius: 20px;
-  font-size: 0.9rem;
-  font-weight: 500;
-}
-
-.filter-btn:hover {
-  background: #f3f4f6;
-  transform: none; /* Disable the bounce effect on filters */
-}
-
-.filter-btn.active {
-  background: var(--primary);
-  color: white;
-  border-color: var(--primary);
-  box-shadow: 0 2px 5px rgba(37, 99, 235, 0.3);
-}
-
-/* --- Incident Cards --- */
+/* --- FEED & CARDS --- */
 .card {
-  background: white;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  box-shadow: var(--shadow);
   margin-bottom: 1.5rem;
-  transition: transform 0.2s;
-  overflow: hidden; /* Keeps image inside rounded corners */
+  overflow: hidden;
+  transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.2s;
 }
 
 .card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 15px rgba(0,0,0,0.05);
-}
-
-/* Card Image */
-.card-image img {
-  width: 100%;
-  height: 250px;
-  object-fit: cover;
-  display: block;
+  border-color: var(--primary);
 }
 
 .card-header {
-  padding: 1.5rem 1.5rem 0.5rem 1.5rem;
+  padding: 1.5rem 1.5rem 0 1.5rem;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -224,119 +228,212 @@ button:active {
 .card-header h4 {
   margin: 0 0 5px 0;
   font-size: 1.15rem;
-  color: #111827;
+  font-weight: 700;
+  color: var(--text-main);
 }
 
 .type-badge {
-  background: #f3f4f6;
-  color: #4b5563;
+  display: inline-block;
+  font-size: 0.75rem;
+  background-color: var(--bg-color);
+  color: var(--text-muted);
   padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-}
-
-/* Status Select & Badge */
-.status-container {
-  display: flex;
-  align-items: center;
-}
-
-.status-select {
-  padding: 4px 8px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  border: 2px solid;
-  border-radius: 6px;
-  background: white;
-  cursor: pointer;
-  width: auto;
-  margin: 0;
-  text-transform: uppercase;
-}
-
-.status-badge-readonly {
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: white;
-  letter-spacing: 0.5px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  margin-bottom: 5px;
 }
 
 .location {
   padding: 0 1.5rem;
   font-weight: 500;
-  color: #4b5563;
+  color: var(--primary);
   margin: 5px 0;
   font-size: 0.9rem;
 }
 
 .description {
   padding: 0 1.5rem;
-  color: #374151;
-  line-height: 1.5;
+  color: var(--text-main);
+  line-height: 1.6;
   margin-bottom: 1rem;
 }
 
-/* Card Footer */
 .card-footer {
-  background: #f9fafb;
-  padding: 10px 1.5rem;
-  border-top: 1px solid #f3f4f6;
+  background-color: var(--bg-color);
+  padding: 12px 1.5rem;
+  border-top: 1px solid var(--border-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  color: var(--text-muted);
   font-size: 0.85rem;
-  color: #6b7280;
+  transition: background-color 0.3s ease;
 }
 
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-/* Verify Button */
-.upvote-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  width: auto;
-  padding: 4px 12px;
-  border-radius: 20px;
-  border: 1px solid #e5e7eb;
-  background: white;
-  color: #555;
-  font-size: 0.8rem;
+/* --- INTERACTIVE BUTTONS & FILTERS --- */
+/* The Report Button & Primary Actions */
+button {
+  background-color: var(--primary);
+  color: white;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
   font-weight: 600;
-  transition: all 0.2s ease;
+  cursor: pointer;
+  transition: transform 0.1s, filter 0.2s;
+  font-size: 1rem;
 }
 
-.upvote-btn:hover {
-  background: #f9fafb;
-  border-color: #d1d5db;
-  transform: translateY(-1px);
+button:hover {
+  filter: brightness(1.1);
 }
 
-.upvote-btn.voted {
-  background: #eff6ff;
+button:active {
+  transform: scale(0.98);
+}
+
+/* The layout for the Report button if wrapped */
+.header-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 20px;
+}
+
+.filter-bar {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+  margin-bottom: 15px;
+}
+
+.filter-btn {
+  background-color: var(--card-bg);
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+  padding: 6px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  white-space: nowrap;
+  width: auto;
+  transition: all 0.3s ease;
+}
+
+.filter-btn:hover {
   border-color: var(--primary);
   color: var(--primary);
 }
 
-.no-data {
-  text-align: center;
-  color: #9ca3af;
-  margin-top: 2rem;
+.filter-btn.active {
+  background-color: var(--primary);
+  color: white;
+  border-color: var(--primary);
 }
 
-.loading-text {
-  text-align: center;
-  color: #6b7280;
-  font-style: italic;
-  padding: 20px;
+.status-select {
+  padding: 4px 10px;
+  border-radius: 6px;
+  background-color: var(--card-bg);
+  color: var(--text-main);
+  border: 2px solid; 
+  font-weight: 700;
+  font-size: 0.75rem;
+  cursor: pointer;
+  outline: none;
+  width: auto;
+}
+
+.status-select option {
+  background-color: var(--card-bg);
+  color: var(--text-main);
+}
+
+.upvote-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border-color);
+  background-color: var(--card-bg);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-weight: 500;
+  width: auto;
+  transition: all 0.2s ease;
+}
+
+.upvote-btn:hover {
+  background-color: var(--bg-color);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.upvote-btn.voted {
+  background-color: rgba(37, 99, 235, 0.15);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* --- ANIMATIONS & LOADERS --- */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.loader-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 0;
+  width: 100%;
+}
+
+.g-loader {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  animation: breathe 1.5s infinite ease-in-out;
+}
+
+@keyframes breathe {
+  0% { transform: scale(0.85); opacity: 0.6; }
+  50% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(0.85); opacity: 0.6; }
+}
+
+/* --- LAYOUT FIXES --- */
+
+/* Ensures the main content takes up remaining space */
+.main-content {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  padding-top: 10px;
+  flex: 1;
+}
+
+/* Ensure the header text stays aligned */
+.app-header {
+  width: 100%; 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center;
+}
+
+/* Fix for the title size in the header */
+.app-header h1 {
+  font-size: 1.5rem; /* adjusted for mobile/desktop balance */
+  margin: 0;
+  line-height: 1;
+  text-align: left;
+}
+
+/* Ensure the 'Report Incident' button group aligns right */
+.main-content > div:first-child {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 20px;
 }
