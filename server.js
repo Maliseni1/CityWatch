@@ -11,46 +11,51 @@ const authRoutes = require('./routes/authRoutes');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// 1. Define Allowed Origins (Localhost + Production URL from Env)
+// --- 1. CONFIGURATION: ALLOWED ORIGINS ---
+// This single list controls access for both the API and WebSockets.
+// I added your specific Vercel URL here to fix the CORS error.
 const allowedOrigins = [
-  "http://localhost:5173",
-  process.env.FRONTEND_URL
-].filter(Boolean);
+  "http://localhost:5173",                 // Local Development
+  "http://localhost:5174",                 // Local Development (alternative port)
+  "https://city-watch-kappa.vercel.app",   // YOUR VERCEL FRONTEND
+  process.env.FRONTEND_URL                 // Extra flexibility via .env
+].filter(Boolean); // Removes empty values if .env is missing
 
-// 2. HTTP Server & Socket.io
+// --- 2. HTTP SERVER & SOCKET.IO ---
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: allowedOrigins,
-    methods: ["GET", "POST"]
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
 
-// 3. Express CORS Middleware
+// --- 3. MIDDLEWARE ---
+// Use the same 'allowedOrigins' list for Express CORS
 app.use(cors({
-  // Add 5174 to this list
-  origin: ["http://localhost:5173", "http://localhost:5174"], 
+  origin: allowedOrigins,
   credentials: true
 }));
 
 app.use(express.json());
 
-// Pass 'io' to every request
+// Pass 'io' to every request so controllers can use it
 app.use((req, res, next) => {
   req.io = io;
   next();
 });
 
-// Database Connection
+// --- 4. DATABASE ---
 mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/citywatch')
   .then(() => console.log('MongoDB Connected'))
   .catch(err => console.error('DB Connection Error:', err));
 
-// Routes
+// --- 5. ROUTES ---
 app.use('/api/incidents', incidentRoutes);
 app.use('/api/auth', authRoutes);
 
-// Socket.io Connection Event
+// Socket.io Events
 io.on('connection', (socket) => {
   console.log('New client connected:', socket.id);
   socket.on('disconnect', () => {
