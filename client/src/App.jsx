@@ -7,7 +7,7 @@ import { usePostHog } from 'posthog-js/react';
 
 function App() {
   // --- STATES ---
-  const [showPassword, setShowPassword] = useState(false); // Toggle for password visibility
+  const [showPassword, setShowPassword] = useState(false); 
   const posthog = usePostHog();
   
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -74,20 +74,17 @@ function App() {
 
   // --- INITIALIZATION ---
   useEffect(() => {
-    // 1. Check URL for Google Token
     const params = new URLSearchParams(window.location.search);
     const urlToken = params.get('token');
 
     if (urlToken) {
       localStorage.setItem('token', urlToken);
       setToken(urlToken);
-      // Remove token from URL for cleaner look
       window.history.replaceState({}, document.title, window.location.pathname);
       toast.success("Logged in with Google!");
     }
 
-    // 2. Check LocalStorage (Standard check)
-    const storedToken = urlToken || token; // Use new token if available
+    const storedToken = urlToken || token; 
     
     if (storedToken) {
       const decoded = parseJwt(storedToken);
@@ -98,16 +95,15 @@ function App() {
           role: decoded.role || 'user' 
         });
         
-        // PostHog Identification for Google Users
         if (decoded.id) {
             posthog.identify(decoded.id, { username: decoded.username });
         }
       }
       fetchIncidents();
     }
-  }, [token]); // Run when 'token' state changes
+  }, [token]); 
 
-  
+
   // --- ACTION: Fetch Incidents ---
   const fetchIncidents = async () => {
     setIsLoading(true);
@@ -156,7 +152,6 @@ function App() {
         localStorage.setItem('token', receivedToken);
         setToken(receivedToken);
         
-        // PostHog Identify
         const decodedUser = parseJwt(receivedToken);
         if (decodedUser?.id) {
           posthog.identify(decodedUser.id, {
@@ -264,7 +259,7 @@ function App() {
   // --- RENDER AUTH ---
   if (!token) {
     return (
-      <div className="auth-container">
+      <div className="auth-container" style={{ position: 'relative', minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
         <Toaster position="top-center" />
         <div className="auth-box">
           <h1>CityWatch 🇿🇲</h1>
@@ -335,7 +330,8 @@ function App() {
               <button 
                 type="button" 
                 className="google-btn"
-                onClick={() => window.location.href = `${API_URL}/api/auth/google`} 
+                onClick={() => window.location.href = `${API_URL}/api/auth/google`}
+                style={{ margin: '15px auto', width: '100%', maxWidth: '250px' }} 
               >
                 <img src="https://img.icons8.com/color/16/000000/google-logo.png" alt="G" />
                 Sign in with Google
@@ -343,11 +339,39 @@ function App() {
             )}
 
           </form>
-          <div style={{marginTop: '15px', fontSize: '0.9rem'}}>
-            {view === 'login' && <><p className="toggle-link" onClick={() => setView('register')}>Create an account</p><p className="toggle-link" onClick={() => setView('forgot')}>Forgot Password?</p></>}
-            {view !== 'login' && <p className="toggle-link" onClick={() => setView('login')}>Back to Login</p>}
+          
+          <div style={{
+              marginTop: '20px', 
+              fontSize: '0.9rem', 
+              display: 'flex', 
+              justifyContent: 'center', 
+              gap: '15px', 
+              color: '#666'
+          }}>
+            {view === 'login' && (
+              <>
+                <span className="toggle-link" onClick={() => setView('register')}>Create account</span>
+                <span>|</span>
+                <span className="toggle-link" onClick={() => setView('forgot')}>Forgot Password?</span>
+              </>
+            )}
+            {view !== 'login' && (
+              <span className="toggle-link" onClick={() => setView('login')}>Back to Login</span>
+            )}
           </div>
         </div>
+
+        {/* AUTH FOOTER (ADDED HERE) */}
+        <footer style={{ 
+          position: 'absolute', 
+          bottom: '20px', 
+          width: '100%', 
+          textAlign: 'center', 
+          color: 'var(--text-muted)',
+          fontSize: '0.85rem'
+        }}>
+          <p>© 2026 CityWatch 🇿🇲 • Built by <strong>Chiza Labs</strong></p>
+        </footer>
       </div>
     );
   }
@@ -472,7 +496,7 @@ function App() {
           
           {filteredIncidents.map((incident) => {
             const isHidden = incident.isAnonymous;
-            const displayName = isHidden ? "Anonymous Citizen" : `@${incident.user}`;
+            const displayName = isHidden ? "Anonymous Citizen " : ` @${incident.user}`;
             const dateString = incident.date || incident.createdAt;
             const formattedDate = dateString ? new Date(dateString).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
             const statusColor = incident.status === 'Resolved' ? '#10b981' : incident.status === 'In Progress' ? '#f59e0b' : '#ef4444';
@@ -552,6 +576,18 @@ function App() {
           })}
         </section>
       </main>
+
+      {/* MAIN APP FOOTER */}
+      <footer style={{ 
+        textAlign: 'center', 
+        padding: '20px', 
+        marginTop: '40px', 
+        borderTop: '1px solid var(--border-color)', 
+        color: 'var(--text-muted)',
+        fontSize: '0.85rem'
+      }}>
+        <p>© 2026 CityWatch 🇿🇲 • Built by <strong>Chiza Labs</strong></p>
+      </footer>
     </div>
   );
 }
