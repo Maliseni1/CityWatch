@@ -8,8 +8,8 @@ import { PostHogProvider } from 'posthog-js/react'
 // Initialize PostHog
 posthog.init(import.meta.env.VITE_POSTHOG_KEY, {
   api_host: import.meta.env.VITE_POSTHOG_HOST,
-  person_profiles: 'identified_only', // Better for privacy
-  capture_pageview: false, // We will handle this manually if needed, or leave true for auto
+  person_profiles: 'identified_only', 
+  capture_pageview: true, // <--- CHANGE THIS TO TRUE for auto-tracking
 })
 
 ReactDOM.createRoot(document.getElementById('root')).render(
