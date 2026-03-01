@@ -7,14 +7,10 @@ const jwt = require('jsonwebtoken');
 // CREATE: Report a new incident (Protected Route)
 router.post('/', async (req, res) => {
   try {
-    // 1. SECURITY: Check for the Token
     const authHeader = req.headers.authorization;
-    if (!authHeader) {
-      return res.status(401).json({ message: 'Authorization token missing' });
-    }
+    if (!authHeader) return res.status(401).json({ message: 'Authorization token missing' });
 
-    // 2. Verify the Token
-    const token = authHeader.split(' ')[1]; // Remove "Bearer "
+    const token = authHeader.split(' ')[1];
     let decoded;
     try {
       decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -22,34 +18,26 @@ router.post('/', async (req, res) => {
       return res.status(403).json({ message: 'Invalid or expired token' });
     }
 
-    // 3. Find the User (to get the correct username)
     const user = await User.findById(decoded.id);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
+    if (!user) return res.status(404).json({ message: 'User not found' });
 
-    // 4. Create the Incident
     const newIncident = new Incident({
       title: req.body.title,
       location: req.body.location,
       description: req.body.description,
       type: req.body.type || 'General',
-      // We save the boolean choice
       isAnonymous: req.body.isAnonymous || false, 
-      // We ALWAYS save the real user (for admin safety), 
-      // the frontend decides whether to show it or not based on isAnonymous.
       imageUrl: req.body.imageUrl || '',
-      user: user.username, 
+      user: user.username,
+      city: user.city, // <--- NEW: Automatically tie to user's city
       status: 'Open'
     });
 
     const savedIncident = await newIncident.save();
 
-    // 5. EMIT EVENT: Tell everyone a new incident happened
-    // Using req.app.get('socketio') is the robust way to access IO in routes
-    const io = req.app.get('socketio'); 
-    if (io) {
-      io.emit('new_incident', savedIncident);
+    // NEW: Emit event ONLY to users in that specific city's room
+    if (req.io) {
+      req.io.to(user.city).emit('new_incident', savedIncident);
     }
 
     res.status(201).json(savedIncident);
@@ -59,11 +47,24 @@ router.post('/', async (req, res) => {
   }
 });
 
-// READ: Get all incidents (Sorted by newest first)
+// READ: Get all incidents (Sorted by newest first & Filtered by City)
 router.get('/', async (req, res) => {
   try {
-    // .sort({ createdAt: -1 }) puts the newest reports at the top
-    const incidents = await Incident.find().sort({ createdAt: -1 });
+    let query = {}; // Default query
+
+    // NEW: Check token to filter incidents by the user's city
+    const authHeader = req.headers.authorization;
+    if (authHeader) {
+      const token = authHeader.split(' ')[1];
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        if (decoded.city) {
+          query.city = decoded.city; // Only fetch incidents for this city
+        }
+      } catch (err) { /* Token invalid, fallback to empty query */ }
+    }
+
+    const incidents = await Incident.find(query).sort({ createdAt: -1 });
     res.json(incidents);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -81,14 +82,18 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// UPDATE: Update status (e.g., mark as Resolved) 
+// UPDATE: Update status
 router.put('/:id', async (req, res) => {
   try {
     const updatedIncident = await Incident.findByIdAndUpdate(
       req.params.id, 
       req.body, 
-      { new: true } // Return the updated document
+      { new: true } 
     );
+    // Notify the city room
+    if (req.io && updatedIncident) {
+      req.io.to(updatedIncident.city).emit('update_incident', updatedIncident);
+    }
     res.json(updatedIncident);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -105,35 +110,31 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-// TOGGLE UPVOTE: /api/incidents/:id/upvote
+// TOGGLE UPVOTE
 router.put('/:id/upvote', async (req, res) => {
   try {
-    // 1. Get the user ID from the token
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) return res.status(401).json({ message: 'Unauthorized' });
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const userId = decoded.id;
 
-    // 2. Find the incident
     const incident = await Incident.findById(req.params.id);
     if (!incident) return res.status(404).json({ message: 'Not found' });
 
-    // 3. Check if user already upvoted
     const index = incident.upvotes.indexOf(userId);
 
     if (index === -1) {
-      // Not found? Add them (Upvote)
       incident.upvotes.push(userId);
     } else {
-      // Found? Remove them (Un-vote)
       incident.upvotes.splice(index, 1);
     }
 
     const updatedIncident = await incident.save();
     
-    // 4. Notify everyone via Socket
-    const io = req.app.get('socketio');
-    if (io) io.emit('update_incident', updatedIncident);
+    // NEW: Notify only the city room
+    if (req.io) {
+      req.io.to(updatedIncident.city).emit('update_incident', updatedIncident);
+    }
 
     res.json(updatedIncident);
   } catch (err) {

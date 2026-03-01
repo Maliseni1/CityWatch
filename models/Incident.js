@@ -5,11 +5,12 @@ const IncidentSchema = new mongoose.Schema({
   location: { type: String, required: true },
   description: { type: String, required: true },
   type: { type: String, default: 'General' },
-  status: { type: String, default: 'Open' }, // Open, In Progress, Resolved
-  user: { type: String }, // The username of the reporter
-  isAnonymous: { type: Boolean, default: false }, // <--- NEW: Stores if they want to be hidden
+  status: { type: String, default: 'Open' }, 
+  user: { type: String }, 
+  city: { type: String, required: true }, // <--- NEW: Incident assigned to a city
+  isAnonymous: { type: Boolean, default: false }, 
   imageUrl: { type: String },
-  upvotes: [{ type: String }] // Array of user IDs
+  upvotes: [{ type: String }] 
 }, { timestamps: true });
 
 module.exports = mongoose.model('Incident', IncidentSchema);

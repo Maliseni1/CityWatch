@@ -24,9 +24,10 @@ function App() {
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'system'); 
 
   const [token, setToken] = useState(localStorage.getItem('token'));
-  const [currentUser, setCurrentUser] = useState({ id: null, username: null, role: 'user' });
+  const [currentUser, setCurrentUser] = useState({ id: null, username: null, role: 'user', city: null });
   const [incidents, setIncidents] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDetectingLocation, setIsDetectingLocation] = useState(false); // <--- NEW: Location loading state
   const [filterType, setFilterType] = useState('All'); 
 
   const [formData, setFormData] = useState({ 
@@ -36,7 +37,8 @@ function App() {
   
   const [view, setView] = useState('login'); 
   const [authData, setAuthData] = useState({ 
-    username: '', email: '', password: '', resetToken: '', newPassword: '' 
+    username: '', email: '', password: '', resetToken: '', newPassword: '',
+    city: 'Lusaka'
   });
 
   const menuRef = useRef(null); 
@@ -92,7 +94,8 @@ function App() {
         setCurrentUser({ 
           id: decoded.id, 
           username: decoded.username, 
-          role: decoded.role || 'user' 
+          role: decoded.role || 'user',
+          city: decoded.city || 'Lusaka' 
         });
         
         if (decoded.id) {
@@ -103,12 +106,12 @@ function App() {
     }
   }, [token]); 
 
-
   // --- ACTION: Fetch Incidents ---
   const fetchIncidents = async () => {
     setIsLoading(true);
     try {
-      const res = await axios.get(`${API_URL}/api/incidents`);
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      const res = await axios.get(`${API_URL}/api/incidents`, config);
       setIncidents(res.data);
     } catch (err) {
       console.error(err);
@@ -120,13 +123,15 @@ function App() {
 
   // --- REAL-TIME SOCKETS ---
   useEffect(() => {
-    if (!token) return;
+    if (!token || !currentUser.city) return;
     const socket = io(API_URL);
+    
+    socket.emit('join_city', currentUser.city);
     
     socket.on('new_incident', (newIncident) => {
       setIncidents((prev) => {
         if (prev.find(i => i._id === newIncident._id)) return prev;
-        toast.success(`New report: ${newIncident.title}`);
+        toast.success(`New report in ${currentUser.city}: ${newIncident.title}`);
         return [newIncident, ...prev];
       });
     });
@@ -138,7 +143,7 @@ function App() {
     });
 
     return () => socket.disconnect();
-  }, [token]);
+  }, [token, currentUser.city]);
 
   // --- HANDLERS ---
   const handleAuthSubmit = async (e) => {
@@ -163,7 +168,12 @@ function App() {
 
         toast.success('Welcome back!');
       } else if (view === 'register') {
-        await axios.post(`${API_URL}/api/auth/register`, { username: authData.username, email: authData.email, password: authData.password });
+        await axios.post(`${API_URL}/api/auth/register`, { 
+          username: authData.username, 
+          email: authData.email, 
+          password: authData.password,
+          city: authData.city
+        });
         toast.success('Account created! Please login.');
         setView('login');
       } else if (view === 'forgot') {
@@ -181,6 +191,46 @@ function App() {
       console.error(err);
       toast.error(err.response?.data?.message || 'Action failed');
     }
+  };
+
+  // <--- NEW: AUTO DETECT LOCATION HANDLER --->
+  const handleAutoDetectLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported by your browser");
+      return;
+    }
+
+    setIsDetectingLocation(true);
+    const loader = toast.loading("Detecting your location...");
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          // Use OpenStreetMap's free Nominatim API for reverse geocoding
+          const res = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+          
+          // Extract a readable address (fallback to raw coords if formatting fails)
+          const address = res.data?.display_name || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+          
+          setFormData(prev => ({ ...prev, location: address }));
+          toast.success("Location found!", { id: loader });
+        } catch (err) {
+          console.error("Geocoding error:", err);
+          // Fallback to raw coordinates if the API fails
+          setFormData(prev => ({ ...prev, location: `${latitude.toFixed(4)}, ${longitude.toFixed(4)}` }));
+          toast.success("GPS Coordinates detected!", { id: loader });
+        } finally {
+          setIsDetectingLocation(false);
+        }
+      },
+      (error) => {
+        console.error("Geolocation error:", error);
+        toast.error("Failed to detect location. Please ensure location permissions are granted.", { id: loader });
+        setIsDetectingLocation(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
   };
 
   const handleIncidentSubmit = async (e) => {
@@ -204,7 +254,8 @@ function App() {
         category: formData.type,
         location: formData.location,
         has_image: !!imageFile,
-        is_anonymous: formData.isAnonymous
+        is_anonymous: formData.isAnonymous,
+        city: currentUser.city 
       });
 
       toast.dismiss(loader);
@@ -278,6 +329,31 @@ function App() {
               <input type="email" placeholder="Email Address" required value={authData.email} onChange={(e) => setAuthData({...authData, email: e.target.value})} />
             )}
             
+            {view === 'register' && (
+              <select 
+                value={authData.city} 
+                onChange={(e) => setAuthData({...authData, city: e.target.value})}
+                required
+                style={{ 
+                  width: '100%', 
+                  padding: '12px', 
+                  marginBottom: '10px', 
+                  borderRadius: '5px', 
+                  border: '1px solid var(--border-color)',
+                  background: 'var(--bg-main)',
+                  color: 'var(--text-main)',
+                  fontSize: '16px'
+                }}
+              >
+                <option value="Lusaka">Lusaka</option>
+                <option value="Ndola">Ndola</option>
+                <option value="Kitwe">Kitwe</option>
+                <option value="Livingstone">Livingstone</option>
+                <option value="Kabwe">Kabwe</option>
+                <option value="Chingola">Chingola</option>
+              </select>
+            )}
+
             {(view === 'login' || view === 'register') && (
               <div className="password-wrapper">
                 <input 
@@ -325,7 +401,6 @@ function App() {
               {view === 'login' ? 'Login' : view === 'register' ? 'Sign Up' : view === 'forgot' ? 'Send Recovery Email' : 'Reset Password'}
             </button>
 
-            {/* GOOGLE LOGIN BUTTON */}
             {view === 'login' && (
               <button 
                 type="button" 
@@ -361,15 +436,7 @@ function App() {
           </div>
         </div>
 
-        {/* AUTH FOOTER (ADDED HERE) */}
-        <footer style={{ 
-          position: 'absolute', 
-          bottom: '20px', 
-          width: '100%', 
-          textAlign: 'center', 
-          color: 'var(--text-muted)',
-          fontSize: '0.85rem'
-        }}>
+        <footer style={{ position: 'absolute', bottom: '20px', width: '100%', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
           <p>© 2026 CityWatch 🇿🇲 • Built by <strong>Chiza Labs</strong></p>
         </footer>
       </div>
@@ -381,21 +448,12 @@ function App() {
     <div className="app-container">
       <Toaster position="top-right" />
       
-      {/* HEADER WITH HAMBURGER MENU */}
       <header className="app-header">
         <h1>CityWatch 🇿🇲</h1>
         
-        {/* Menu Container */}
         <div style={{ position: 'relative' }} ref={menuRef}>
-          <button 
-            onClick={() => setIsMenuOpen(!isMenuOpen)} 
-            className="menu-btn"
-            aria-label="Menu"
-          >
-            ☰
-          </button>
+          <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="menu-btn" aria-label="Menu">☰</button>
 
-          {/* Dropdown Content */}
           {isMenuOpen && (
             <div className="dropdown-menu">
               <div className="dropdown-item" onClick={() => handleThemeChange('light')}>
@@ -420,7 +478,6 @@ function App() {
 
       <main className="main-content">
         
-        {/* TOGGLE BUTTON */}
         <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'flex-end' }}>
           <button 
             onClick={() => setShowForm(!showForm)}
@@ -437,7 +494,6 @@ function App() {
           </button>
         </div>
 
-        {/* FORM SECTION */}
         {showForm && (
           <section className="form-section" style={{ animation: 'fadeIn 0.3s ease' }}>
             <h3>📢 Report an Incident</h3>
@@ -452,7 +508,37 @@ function App() {
                   <option value="Water">Water Supply 💧</option>
                 </select>
               </div>
-              <input placeholder="Location" value={formData.location} required onChange={(e) => setFormData({...formData, location: e.target.value})} />
+              
+              {/* <--- NEW: LOCATION INPUT WITH AUTO DETECT BUTTON ---> */}
+              <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
+                <input 
+                  placeholder="Location / Address" 
+                  value={formData.location} 
+                  required 
+                  onChange={(e) => setFormData({...formData, location: e.target.value})} 
+                  style={{ flex: 1, marginBottom: 0 }}
+                />
+                <button 
+                  type="button" 
+                  onClick={handleAutoDetectLocation}
+                  disabled={isDetectingLocation}
+                  style={{ 
+                    width: 'auto', 
+                    padding: '0 15px', 
+                    background: 'var(--bg-secondary)', 
+                    color: 'var(--text-main)',
+                    border: '1px solid var(--border-color)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    cursor: isDetectingLocation ? 'wait' : 'pointer'
+                  }}
+                  title="Detect my current location"
+                >
+                  {isDetectingLocation ? '⏳...' : '📍 Auto'}
+                </button>
+              </div>
+
               <textarea placeholder="Description..." value={formData.description} required rows="3" onChange={(e) => setFormData({...formData, description: e.target.value})} />
               
               <div className="file-upload-wrapper">
@@ -470,10 +556,10 @@ function App() {
           </section>
         )}
 
-        {/* FEED SECTION */}
         <section className="feed-section">
           <div className="feed-header">
-            <h3>Community Reports</h3>
+            <h3>Community Reports {currentUser.city ? `- ${currentUser.city}` : ''}</h3>
+            
             <div className="filter-bar">
               {['All', 'Sanitation', 'Infrastructure', 'Traffic', 'Water'].map(type => (
                 <button 
@@ -492,7 +578,7 @@ function App() {
               <img src="/logo.png" alt="Loading..." className="g-loader" />
             </div>
           )}
-          {!isLoading && filteredIncidents.length === 0 && <p className="no-data">No reports found.</p>}
+          {!isLoading && filteredIncidents.length === 0 && <p className="no-data">No reports found in {currentUser.city}.</p>}
           
           {filteredIncidents.map((incident) => {
             const isHidden = incident.isAnonymous;
@@ -577,15 +663,7 @@ function App() {
         </section>
       </main>
 
-      {/* MAIN APP FOOTER */}
-      <footer style={{ 
-        marginTop: 'auto',      // Pushes it to bottom if using flex column
-        padding: '20px', 
-        width: '100%', 
-        textAlign: 'center', 
-        color: 'var(--text-muted)',
-        fontSize: '0.85rem'
-      }}>
+      <footer style={{ marginTop: 'auto', padding: '20px', width: '100%', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
         <p>© 2026 CityWatch 🇿🇲 • Built by <strong>Chiza Labs</strong></p>
       </footer>
     </div>
