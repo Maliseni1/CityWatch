@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# If you create a sitemap later, uncomment and link it here:
+# Sitemap: https://www.your-citywatch-domain.com/sitemap.xml
