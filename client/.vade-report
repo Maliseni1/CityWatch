@@ -1,0 +1,57 @@
+# Vercel Web Analytics Installation - Implementation Report
+
+## Summary
+Successfully installed and configured Vercel Web Analytics for the CityWatch project following the latest official Vercel documentation.
+
+## Changes Made
+
+### 1. Package Installation
+- **Added dependency**: `@vercel/analytics@^2.0.1` to package.json
+- Used npm to install the package (matching the project's existing package manager)
+- Updated package-lock.json with new dependency tree
+
+### 2. Code Integration
+**Modified**: `client/src/App.jsx`
+- Added import statement: `import { Analytics } from '@vercel/analytics/react';`
+- Integrated `<Analytics />` component into the main App component's JSX return
+- Positioned the Analytics component alongside other global components (after Toaster, before Routes)
+
+## Implementation Details
+
+### Framework-Specific Configuration
+According to the official Vercel documentation (https://vercel.com/docs/analytics/quickstart), this project uses React + Vite, which requires:
+- Installing `@vercel/analytics` package
+- Importing from `@vercel/analytics/react`
+- Adding the `<Analytics />` component to the root App component
+
+### Integration Approach
+The Analytics component was added to the main App component (client/src/App.jsx) because:
+1. This is the root component that wraps all routes and pages
+2. It ensures analytics tracking works across all pages (both /login and / routes)
+3. It follows the pattern already established with the Toaster component
+4. It maintains compatibility with the existing PostHog analytics integration
+
+## Verification Steps Completed
+
+✅ **Build Verification**: Successfully ran `npm run build` - build completed without errors
+✅ **Linting**: Ran `npm run lint` - no new linting errors introduced by changes
+✅ **Dependencies**: package-lock.json properly updated with new dependency
+✅ **Code Quality**: Changes follow existing code patterns and maintain consistency
+
+## Files Changed
+1. `client/package.json` - Added @vercel/analytics dependency
+2. `client/package-lock.json` - Updated with new dependency tree (234 packages added)
+3. `client/src/App.jsx` - Added Analytics import and component
+
+## Next Steps for Deployment
+To complete the Vercel Web Analytics setup:
+1. Enable Web Analytics in your Vercel dashboard (Analytics section)
+2. Deploy the application to Vercel using `vercel deploy`
+3. Verify analytics tracking by checking browser Network tab for `/_vercel/insights/*` requests
+4. Monitor analytics data in the Vercel dashboard
+
+## Notes
+- The Analytics component will automatically work in production when deployed to Vercel
+- In development mode, analytics may not send data (this is expected behavior)
+- The existing PostHog analytics integration remains unchanged and will work alongside Vercel Analytics
+- No environment variables are required for basic Vercel Web Analytics functionality

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster, toast } from 'react-hot-toast';
 import { usePostHog } from 'posthog-js/react';
+import { Analytics } from '@vercel/analytics/react';
 import Auth from './pages/Auth';
 import Feed from './pages/Feed';
 import './App.css';
@@ -72,6 +73,7 @@ function App() {
   return (
     <Router>
       <Toaster position="top-right" />
+      <Analytics />
       <Routes>
         <Route 
           path="/login" 
